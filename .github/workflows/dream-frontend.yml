@@ -4,14 +4,14 @@ name: Dream-Frontend CI/CD
 # AND only if the changes affect files inside the 'frontend' folder
 on:
   push:
-    branches: [dev]
+    branches: [ dev ]
     paths: 
-      - frontend/**   # Only trigger if changes are made in the 'frontend' directory
+      - 'frontend/**'   # Only trigger if changes are made in the 'frontend' directory
   pull_request:
-    branches: [dev]
+    branches: [ dev ]
     paths: 
-      - frontend/**   # Only trigger if changes are made in the 'frontend' directory
-      
+      - 'frontend/**'   # Only trigger if changes are made in the 'frontend' directory
+
 jobs:
   lint-build-push-to-dockerhub:
     runs-on: ubuntu-latest
