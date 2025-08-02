@@ -1,0 +1,42 @@
+
+services:
+  frontend:
+    image: aiyus/dream-vacation-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - vacation-net
+
+  backend:
+    image: aiyus/dream-vacation-backend
+    ports:
+      - "5000:5000"
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: ${DB_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      - db
+    networks:
+      - vacation-net
+
+  db:
+    image: postgres:14
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file: .env
+    networks:
+      - vacation-net
+
+volumes:
+  pgdata:
+
+networks:
+  vacation-net:
+    driver: bridge

@@ -1,0 +1,41 @@
+# === Node.js ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.env
+
+# === React (Frontend Build) ===
+frontend/build/
+frontend/node_modules/
+frontend/.env
+frontend/.eslintcache
+
+# === Backend ===
+backend/node_modules/
+backend/.env
+backend/.eslintcache
+
+# === Logs ===
+logs/
+*.log
+*.log.*
+debug.log
+
+# === Docker ===
+*.pid
+*.pid.lock
+docker-compose.override.yml
+
+# === VSCode / IDE ===
+.vscode/
+.idea/
+*.swp
+
+# === System ===
+.DS_Store
+Thumbs.db
+
+# === GitHub Actions ===
+.github/workflows/*.bak
