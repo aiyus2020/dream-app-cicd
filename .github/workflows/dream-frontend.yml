@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      #  Step 2: Lint the frontend code using ESLint
+      #  Step 2: Lint the frontend code using ESLints
       # This uses the 'wearerequired/lint-action' GitHub Marketplace Action
       - name: Lint frontend with ESLint
         uses: wearerequired/lint-action@v2
