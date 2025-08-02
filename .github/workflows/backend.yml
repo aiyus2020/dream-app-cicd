@@ -52,4 +52,4 @@ jobs:
           push: true
           file: backend/Dockerfile   # Specify the Dockerfile location
           context: backend           # Set the build context to the backend directory
-          tags: aiyus/dream-backend:${{ github.sha }}   # Image tagged with the commit SHA
+          tags: aiyus/dream-backend  # Image tagged with the commit SHA
