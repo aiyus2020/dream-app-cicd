@@ -5,8 +5,7 @@ name: Dream-Frontend CI/CD
 on:
   push:
     branches: [ dev ]
-    paths: 
-      - 'frontend/**'   # Only trigger if changes are made in the 'frontend' directory
+   
 
 
 jobs:
