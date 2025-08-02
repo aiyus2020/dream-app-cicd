@@ -50,6 +50,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          file: backend/Dockerfile   # Specify the Dockerfile location
-          context: backend           # Set the build context to the backend directory
-          tags: aiyus/dream-backend  # Image tagged with the commit SHA
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/dream-backend:${{ github.sha }}  # Tag the image with the commit SHA
+          context: .  # Use the current directory as the build context
+          file: backend/Dockerfile  # Specify the Dockerfile location
