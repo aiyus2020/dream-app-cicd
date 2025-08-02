@@ -39,7 +39,7 @@ app.post('/api/destinations', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('Error details:', err.message || err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internals server error' });
   }
 });
 

@@ -16,7 +16,10 @@ on:
 jobs:
   lint-build-push-to-dockerhub:
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: frontend
+        
     steps:
       #  Step 1: Checkout the repository code
       - name: Checkout code
