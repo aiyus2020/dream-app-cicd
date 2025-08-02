@@ -4,8 +4,12 @@ name: Dream-Frontend CI/CD
 on:
   push:
     branches: [dev]
-     # Only trigger for changes in the frontend directory
-
+    paths:
+      - 'Dream-Vacation-App-main/backend/**'
+  pull_request:
+    branches: [dev]
+    paths:
+      - 'Dream-Vacation-App-main/backend/**'
 jobs:
   lint-build-push-to-dockerhub:
     runs-on: ubuntu-latest
@@ -15,12 +19,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Run ESLint to check for code quality issues in the frontend directory
-      - name: Lint frontend with ESLint
+      # Step 2: Run ESLint to check for code quality issues in the backend directory
+      - name: Lint backend with ESLint
         uses: wearerequired/lint-action@v2
         with:
           eslint: true                 # Enable ESLint
-          eslint_dir: frontend         # Target frontend directory
+          eslint_dir: backend         # Target backend directory
           auto_fix: false              # Only report errors, don't try to auto-fix
 
       # Step 3: Login to Docker Hub using GitHub secrets (Docker credentials)
@@ -39,5 +43,4 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: aiyus/dream-frontend:${{ github.sha }}   # Image tagged with the commit SHA
-            
+          tags: aiyus/dream-backend:${{ github.sha }}   # Image tagged with the commit SHA
