@@ -4,7 +4,7 @@ name: Dream-Frontend CI/CD
 on:
   push:
     branches: [dev]
-    paths: [frontend/**]  # Only trigger for changes in the frontend directory
+     # Only trigger for changes in the frontend directory
 
 jobs:
   lint-build-push-to-dockerhub:
