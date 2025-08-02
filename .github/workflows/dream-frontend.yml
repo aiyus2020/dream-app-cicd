@@ -6,11 +6,11 @@ on:
   push:
     branches: [ dev ]
     paths: 
-      - 'frontend/**'   # Only trigger if changes are made in the 'frontend' directory
+      - 'dream-frontend/**'   # Only trigger if changes are made in the 'frontend' directory
   pull_request:
     branches: [ dev ]
     paths: 
-      - 'frontend/**'   # Only trigger if changes are made in the 'frontend' directory
+      - 'dream-frontend/**'   # Only trigger if changes are made in the 'frontend' directory
 
 jobs:
   lint-build-push-to-dockerhub:
