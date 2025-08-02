@@ -4,12 +4,10 @@ name: Dream-Frontend CI/CD
 on:
   push:
     branches: [dev]
-    paths:
-      - 'Dream-Vacation-App-main/backend/**'
+    paths: [backend/**]
   pull_request:
     branches: [dev]
-    paths:
-      - 'Dream-Vacation-App-main/backend/**'
+    paths: [backend/**]
 jobs:
   lint-build-push-to-dockerhub:
     runs-on: ubuntu-latest
