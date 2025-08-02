@@ -21,6 +21,14 @@ jobs:
       #  Step 1: Checkout the repository code
       - name: Checkout code
         uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
 
       #  Step 2: Lint the frontend code using ESLints
       # This uses the 'wearerequired/lint-action' GitHub Marketplace Action

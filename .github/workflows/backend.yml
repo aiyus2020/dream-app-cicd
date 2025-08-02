@@ -15,6 +15,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
       # Step 2: Run ESLint to check for code quality issues in the backend directory
       - name: Lint backend with ESLint
         uses: wearerequired/lint-action@v2
