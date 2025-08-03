@@ -47,8 +47,8 @@ jobs:
 
       # Step 5: Build and push the Docker image to Docker Hub
      # Frontend build & push
-      - name: Build frontend image
-        run: docker build -t aiyus/dream-backend ./backend
+      - name: Build backend image
+        run: docker build -t aiyus/dream-backend .backend
 
-      - name: Push frontend image
+      - name: Push backend image
         run: docker push aiyus/dream-backend
