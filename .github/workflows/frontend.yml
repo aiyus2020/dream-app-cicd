@@ -1,29 +1,22 @@
 name: Dream-Frontend CI/CD
 
-# Trigger workflow only when changes are pushed to or pulled into 'dev' branch
-# AND only if the changes affect files inside the 'frontend' folder
+# Trigger this workflow on push or pull request to the 'dev' branch
 on:
   push:
-    branches: [ dev ]
+    branches: [dev]
     paths:
       - 'frontend/**'   # Only trigger if changes are made in the 'frontend' directory
-  pull_request:
-    branches: [ dev ]
-    paths:
-      - 'frontend/**'   # Only trigger if changes are made in the 'frontend' directory  
-
-
 jobs:
   lint-build-push-to-dockerhub:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
-        
     steps:
-      #  Step 1: Checkout the repository code
+      # Step 1: Checkout the code from the repository
       - name: Checkout code
         uses: actions/checkout@v3
+
         
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -33,29 +26,30 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      #  Step 2: Lint the frontend code using ESLints
-      # This uses the 'wearerequired/lint-action' GitHub Marketplace Action
+      # Step 2: Run ESLint to check for code quality issues in the frontend directory
       - name: Lint frontend with ESLint
         uses: wearerequired/lint-action@v2
         with:
-          eslint: true               # Enable ESLint
-          eslint_dir: frontend       # Run ESLint inside the frontend directory
-          auto_fix: false            # Only report issues, do not auto-fix them
+          eslint: true                 # Enable ESLint
+          eslint_dir: frontend         # Target frontend directory
+          auto_fix: false              # Only report errors, don't try to auto-fix
 
-      # ✅ Step 3: Authenticate to Docker Hub using stored GitHub secrets/variables
+      # Step 3: Login to Docker Hub using GitHub secrets (Docker credentials)
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}   # Set as a repository variable
-          password: ${{ secrets.DOCKERHUB_TOKEN }}   # Set as a secret
+          username: ${{ vars.DOCKERHUB_USERNAME }}   # Username stored in repository variables
+          password: ${{ secrets.DOCKERHUB_TOKEN }}   # Token stored securely in secrets
 
-      # ✅ Step 4: Set up Docker Buildx (required for docker/build-push-action)
+      # Step 4: Set up Docker Buildx (a builder for advanced features like multi-platform builds)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # ✅ Step 5: Build and push the Docker image to Docker Hub
+      # Step 5: Build and push the Docker image to Docker Hub
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: aiyus/dream-frontend:${{ github.sha }}   # Tag image with commit SHA
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/dream-frontend:${{ github.sha }}  # Tag the image with the commit SHA
+          context: frontend  # Use the current directory as the build context
+          file: frontend/Dockerfile  # Specify the Dockerfile location

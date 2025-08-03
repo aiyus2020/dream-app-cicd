@@ -121,3 +121,44 @@ docker-compose up --build
 ---
 
 
+
+
+## 🛠️🌀 **CI/CD Update**
+
+### ✨ New CI/CD Workflow Configuration
+
+* Implemented **GitHub Actions** to automate Docker image builds and push to Docker Hub.
+* Created 
+`.github/workflows/frontend.yml`
+`.github/workflows/backend.yml`
+ which does the following on push to main:
+
+  * Checks out the code
+  * Logs in to DockerHub using GitHub secrets
+  * lint the code
+  * Builds frontend and backend Docker images using `docker buildx`
+  * Pushes images to Docker Hub
+
+### 🗃️ GitHub Secrets and env Used:
+
+* `DOCKERHUB_USERNAME` (env)
+* `DOCKERHUB_TOKEN`(secret)
+
+
+### 📸 Screenshot – Successful CI/CD Deployment
+
+![CI Screenshot](Assets/image10.png)
+
+---
+
+## 🧾 Summary
+
+This project demonstrates how to:
+
+* Dockerize a full-stack application
+* Use Docker Compose for service orchestration
+* Push images to Docker Hub
+* Automate the image build-and-push process using **CI/CD with GitHub Actions**
+
+> 🔐 Sensitive variables like Docker credentials and `.env` contents are managed securely through `.gitignore` and GitHub secrets.
+

@@ -1,4 +1,4 @@
-name: Dream-Frontend CI/CD
+name: Dream-backend CI/CD
 
 # Trigger this workflow on push or pull request to the 'dev' branch
 on:
