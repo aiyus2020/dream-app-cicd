@@ -28,7 +28,7 @@ jobs:
 
       # Step 2: Run ESLint to check for code quality issues in the frontend directory
       - name: Lint frontend with ESLint
-        uses: wearerequired/lint-action@v2
+        uses: wearerequired/lint-action@v2.3.0
         with:
           eslint: true                 # Enable ESLint
           eslint_dir: frontend         # Target frontend directory
