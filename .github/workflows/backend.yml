@@ -51,5 +51,5 @@ jobs:
         with:
           push: true
           tags: ${{ vars.DOCKERHUB_USERNAME }}/dream-backend:${{ github.sha }}  # Tag the image with the commit SHA
-          context: .  # Use the current directory as the build context
+          context: backend  # Use the current directory as the build context
           file: backend/Dockerfile  # Specify the Dockerfile location
