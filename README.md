@@ -131,7 +131,7 @@ docker-compose up --build
 * Created 
 `.github/workflows/frontend.yml`
 `.github/workflows/backend.yml`
- which does the following on push to main:
+ which does the following on push to dev:
 
   * Checks out the code
   * Logs in to DockerHub using GitHub secrets
