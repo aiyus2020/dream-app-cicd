@@ -147,7 +147,18 @@ docker-compose up --build
 
 ### 📸 Screenshot – Successful CI/CD Deployment
 
-![CI Screenshot](Assets/image10.png)
+![text](Assets/hub1.png) 
+![text](Assets/hub2.png) 
+![text](Assets/hub3.png) 
+![text](Assets/hub4.png) 
+![text](Assets/hub5.png) 
+![text](Assets/hub6.png) 
+![text](Assets/hub7.png) 
+![text](Assets/hub8.png) 
+![text](Assets/hub9.png) 
+![text](Assets/hub10.png) 
+![text](Assets/hub11.png) 
+![text](Assets/hub12.png)
 
 ---
 
