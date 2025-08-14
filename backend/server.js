@@ -22,7 +22,7 @@ app.get('/api/destinations', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internals server error' });
+    res.status(500).json({ error: 'Interna server error' });
   }
 });
 
