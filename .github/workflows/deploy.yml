@@ -33,13 +33,14 @@ jobs:
           script: |
             cd /home/ubuntu/dream-vacation
             echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-              cat <<EOF > .env
+            cat <<EOF > .env
             DB_PORT=${{ secrets.DB_PORT }}
             POSTGRES_DB=${{ secrets.POSTGRES_DB }}
             POSTGRES_USER=${{ secrets.POSTGRES_USER }}
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             DOCKERHUB_USERNAME=${{ vars.DOCKERHUB_USERNAME }}
             DOCKERHUB_TOKEN=${{ secrets.DOCKERHUB_TOKEN }}
-              EOF
+            EOF
+
             docker-compose pull
             docker-compose up -d 
