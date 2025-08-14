@@ -33,10 +33,15 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            sudo apt update && sudo apt install -y jq
             cd /home/ubuntu/dream-vacation
+        
+            FRONTEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-frontend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
+            BACKEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-backend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
+
             cat <<EOF > .env
-              FRONTEND_TAG=${{ github.sha }}
-              BACKEND_TAG=${{ github.sha }}
+              FRONTEND_TAG=${FRONTEND_SHA}
+              BACKEND_TAG=${BACKEND_SHA}
               DB_PORT=${{ secrets.DB_PORT }}
               POSTGRES_DB=${{ secrets.POSTGRES_DB }}
               POSTGRES_USER=${{ secrets.POSTGRES_USER }}
@@ -45,4 +50,4 @@ jobs:
 
     
             docker-compose pull
-            docker-compose up -d 
+            docker-compose up -d --remove-orphans
