@@ -32,6 +32,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/dream-vacation
+            echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
             cat <<EOF > .env
               DB_PORT=${{ secrets.DB_PORT }}
               POSTGRES_DB=${{ secrets.POSTGRES_DB }}
