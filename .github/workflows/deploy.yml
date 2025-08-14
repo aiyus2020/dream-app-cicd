@@ -10,10 +10,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Sync files to EC2
+      # Sync files to EC2
+      - name: Sync files to EC2 with rsync
         uses: burnett01/rsync-deployments@5.0
         with:
           switches: -avz --delete --exclude '.git/' --exclude 'node_modules/' --exclude '.github/' --exclude '*.log'
@@ -23,6 +24,7 @@ jobs:
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
 
+      # Deploy app on EC2
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -30,17 +32,14 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            mkdir -p /home/ubuntu/dream-vacation
             cd /home/ubuntu/dream-vacation
-
-            # Create .env file
-            echo "FRONTEND_TAG=${GITHUB_SHA}" > .env
-            echo "BACKEND_TAG=${GITHUB_SHA}" >> .env
-            echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
-            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
-            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
-            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-
-            # Pull SHA-tagged images and start containers
+            cat <<EOF > .env
+            FRONTEND_TAG=${GITHUB_SHA}
+            BACKEND_TAG=${GITHUB_SHA}
+            DB_PORT=${{ secrets.DB_PORT }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            EOF
             docker-compose pull
-            docker-compose up -d
+            docker-compose up -d --build
