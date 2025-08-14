@@ -23,10 +23,6 @@ jobs:
           remote_host: ${{ secrets.EC2_HOST }}
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
-      - name: Replace image tags with SHA
-        run: |
-                sed -i "s|aiyus/dream-backend:.*|aiyus/dream-backend:${GITHUB_SHA}|g" docker-compose.yml
-                sed -i "s|aiyus/dream-frontend:.*|aiyus/dream-frontend:${GITHUB_SHA}|g" docker-compose.yml
       # Deploy app on EC2
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
