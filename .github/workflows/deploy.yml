@@ -23,6 +23,11 @@ jobs:
           remote_host: ${{ secrets.EC2_HOST }}
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
+      - name: Update docker-compose.yml with commit SHA
+        run: |
+         sed -i "s|aiyus/dream-vacation-backend:.*|aiyus/dream-backend:${GITHUB_SHA}|g" docker-compose.yml
+         sed -i "s|aiyus/dream-vacation-frontend:.*|aiyus/dream-frontend:${GITHUB_SHA}|g" docker-compose.yml
+
       # Deploy app on EC2
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
@@ -38,6 +43,6 @@ jobs:
               POSTGRES_USER=${{ secrets.POSTGRES_USER }}
               POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
-            
+
             docker-compose pull
             docker-compose up -d 
