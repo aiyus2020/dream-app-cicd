@@ -34,14 +34,12 @@ jobs:
             cd /home/ubuntu/dream-vacation
 
             # Create .env file
-            cat <<EOF > .env
-FRONTEND_TAG=${GITHUB_SHA}
-BACKEND_TAG=${GITHUB_SHA}
-DB_PORT=${{ secrets.DB_PORT }}
-POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-EOF
+            echo "FRONTEND_TAG=${GITHUB_SHA}" > .env
+            echo "BACKEND_TAG=${GITHUB_SHA}" >> .env
+            echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
 
             # Pull SHA-tagged images and start containers
             docker-compose pull
