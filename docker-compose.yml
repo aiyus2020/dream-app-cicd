@@ -1,7 +1,7 @@
 
 services:
   frontend:
-    image: aiyus/dream-vacation-frontend:${GITHUB_SHA}
+    image: aiyus/dream-vacation-frontend
     ports:
       - "80:80"
     depends_on:
