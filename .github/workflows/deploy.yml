@@ -10,8 +10,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      # Sync files to EC2
       - name: Sync files to EC2
         uses: burnett01/rsync-deployments@5.0
         with:
@@ -22,6 +24,7 @@ jobs:
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
 
+      # Deploy on EC2
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
