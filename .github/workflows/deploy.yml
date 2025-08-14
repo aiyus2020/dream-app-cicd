@@ -23,10 +23,7 @@ jobs:
           remote_host: ${{ secrets.EC2_HOST }}
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
-      - name: Update docker-compose.yml with commit SHA
-        run: |
-         sed -i "s|aiyus/dream-vacation-backend:.*|aiyus/dream-backend:${{ github.sha }}|g" docker-compose.yml
-         sed -i "s|aiyus/dream-vacation-frontend:.*|aiyus/dream-frontend:${{ github.sha }}|g" docker-compose.yml
+      
 
       # Deploy app on EC2
       - name: Deploy on EC2

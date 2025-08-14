@@ -1,7 +1,7 @@
 
 services:
   frontend:
-    image: aiyus/dream-vacation-frontend
+    image: aiyus/dream-frontend:${{ github.sha }}
     ports:
       - "80:80"
     depends_on:
@@ -10,7 +10,7 @@ services:
       - vacation-net
 
   backend:
-    image: aiyus/dream-vacation-backend
+    image: aiyus/dream-backend:${{ github.sha }}
     ports:
       - "5000:5000"
     env_file: .env
