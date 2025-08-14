@@ -41,5 +41,6 @@ jobs:
               POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
+            export GIT_SHA=${GITHUB_SHA}
             docker-compose pull
             docker-compose up -d 
