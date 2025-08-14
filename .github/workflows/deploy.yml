@@ -18,7 +18,7 @@ jobs:
         uses: burnett01/rsync-deployments@5.0
         with:
           switches: -avz --delete 
-          path: .
+          path: ./
           remote_path: /home/ubuntu/dream-vacation
           remote_host: ${{ secrets.EC2_HOST }}
           remote_user: ubuntu
@@ -38,6 +38,8 @@ jobs:
               POSTGRES_DB=${{ secrets.POSTGRES_DB }}
               POSTGRES_USER=${{ secrets.POSTGRES_USER }}
               POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+              DOCKERHUB_USERNAME=${{ vars.DOCKERHUB_USERNAME }}
+              DOCKERHUB_TOKEN=${{ secrets.DOCKERHUB_TOKEN }}    
               EOF
             docker-compose pull
             docker-compose up -d --build
