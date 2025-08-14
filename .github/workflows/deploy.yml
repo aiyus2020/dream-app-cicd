@@ -1,0 +1,37 @@
+name: Deploy Dream Vacation App
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Sync files to EC2
+      - name: Sync files to EC2 with rsync
+        uses: burnett01/rsync-deployments@5.0
+        with:
+          switches: -avz --delete --exclude '.git/' --exclude 'node_modules/' --exclude '.github/' --exclude '*.log'
+          path: ./
+          remote_path: /home/ubuntu/dream-vacation
+          remote_host: ${{ secrets.EC2_HOST }}
+          remote_user: ubuntu
+          remote_key: ${{ secrets.EC2_SSH_KEY }}
+
+      # Deploy app on EC2
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/dream-vacation
+            FRONTEND_TAG=${GITHUB_SHA} BACKEND_TAG=${GITHUB_SHA} docker-compose pull
+            FRONTEND_TAG=${GITHUB_SHA} BACKEND_TAG=${GITHUB_SHA} docker-compose up -d
