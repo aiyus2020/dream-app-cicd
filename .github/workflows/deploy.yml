@@ -25,27 +25,24 @@ jobs:
           remote_key: ${{ secrets.EC2_SSH_KEY }}
 
       # Deploy on EC2
-      - name: Deploy on EC2
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_SHA=${{ github.sha }}
-          script: |
-            mkdir -p /home/ubuntu/dream-vacation
-            cd /home/ubuntu/dream-vacation
+     - name: Deploy on EC2
+  uses: appleboy/ssh-action@v0.1.7
+  with:
+    host: ${{ secrets.EC2_HOST }}
+    username: ubuntu
+    key: ${{ secrets.EC2_SSH_KEY }}
+    script: |
+      mkdir -p /home/ubuntu/dream-vacation
+      cd /home/ubuntu/dream-vacation
+      cat <<EOF > .env
+FRONTEND_TAG=${GITHUB_SHA}
+BACKEND_TAG=${GITHUB_SHA}
+DB_PORT=${{ secrets.DB_PORT }}
+POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+EOF
 
-            # Create .env with SHA-tagged images and DB credentials
-            cat <<EOF > .env
-            FRONTEND_TAG=${GITHUB_SHA}
-            BACKEND_TAG=${GITHUB_SHA}
-            DB_PORT=${{ secrets.DB_PORT }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            EOF
-
-            # Pull SHA-tagged images and start containers
-            docker-compose pull
-            docker-compose up -d
+      # Pull SHA-tagged images and run containers
+      docker-compose pull
+      docker-compose up -d
