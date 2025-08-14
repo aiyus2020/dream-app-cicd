@@ -35,12 +35,14 @@ jobs:
           script: |
             cd /home/ubuntu/dream-vacation
             cat <<EOF > .env
+              FRONTEND_TAG=${{ github.sha }}
+              BACKEND_TAG=${{ github.sha }}
               DB_PORT=${{ secrets.DB_PORT }}
               POSTGRES_DB=${{ secrets.POSTGRES_DB }}
               POSTGRES_USER=${{ secrets.POSTGRES_USER }}
               POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
-            export GIT_SHA=${GITHUB_SHA}
+    
             docker-compose pull
             docker-compose up -d 

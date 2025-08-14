@@ -1,7 +1,7 @@
 
 services:
   frontend:
-    image: aiyus/dream-frontend:${GIT_SHA}
+    image: aiyus/dream-frontend:${FRONTEND_TAG}
     ports:
       - "80:80"
     depends_on:
@@ -10,7 +10,7 @@ services:
       - vacation-net
 
   backend:
-    image: aiyus/dream-backend:${GIT_SHA}
+    image: aiyus/dream-backend:${BACKEND_TAG}
     ports:
       - "5000:5000"
     env_file: .env
