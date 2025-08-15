@@ -173,3 +173,115 @@ This project demonstrates how to:
 
 > 🔐 Sensitive variables like Docker credentials and `.env` contents are managed securely through `.gitignore` and GitHub secrets.
 
+Here’s a clean and professional README-style write-up based on what you just described:
+
+---
+
+# updated 
+# 🚀 Project Deployment Documentation
+
+## 📌 Overview
+
+This document outlines the steps I took to deploy the **Dream Vacation App** to AWS, including infrastructure setup, CI/CD configuration, and handling challenges with pulling the latest image.
+
+---
+
+## 🛠 Step 1 — Create Production Branch
+
+I started by creating a new branch for production deployment:
+
+```bash
+git checkout -b production
+```
+
+---
+
+## ☁️ Step 2 — AWS Infrastructure Setup
+
+I logged into my AWS account and created the required networking and compute resources:
+
+* **VPC** — `dream-vpc` with CIDR `10.0.0.0/16`
+* **Subnet** — `dream-subnet` with CIDR `10.0.1.0/24`
+* **Internet Gateway** — `dream-igw`
+* **Route Table** — `dream-rt` (associated with VPC and subnet)
+* **EC2 Instance** — Ubuntu-based, `t2.micro` type
+  Configured security groups to allow HTTP (80), HTTPS (443), and SSH (22) access.
+* **User data** - provisioned my server by installing docker and docker compose
+
+---
+
+## ⚙️ Step 3 — Deploy Workflow Creation
+
+I created a **deployment workflow file** in the `.github/workflows/` directory.
+This workflow:
+
+1. SSHs into the EC2 instance
+2. Fetches the latest Docker image tag
+3. Updates environment variables for Docker Compose
+4. Pulls the latest images
+5. Restarts containers
+
+---
+
+## 🔄 Step 4 — CI/CD Pipeline
+
+I wrote the GitHub Actions pipeline and pushed it to the `production` branch:
+
+```bash
+git add .
+git commit -m "Add deploy workflow"
+git push origin production
+```
+
+Once pushed, the workflow automatically deployed the latest application version to AWS.
+
+---
+
+## 🚧 Challenges & Solutions
+
+**Challenge:**
+Retrieving the latest GitHub commit SHA from Docker Hub so the deployment always runs with the newest image.
+
+**Solution:**
+I installed `jq` on the EC2 instance and used it to query the Docker Hub API:
+
+```bash
+FRONTEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/<username>/dream-frontend/tags?page_size=1&ordering=last_updated" | jq -r '.results[0].name')
+```
+
+This allowed the workflow to dynamically fetch and deploy the most up-to-date image.
+
+---
+
+## ✅ Deployment Summary
+
+* Created production branch
+* Built AWS networking and compute infrastructure
+* Wrote and committed a deployment workflow
+* Used GitHub Actions to automate pulling the latest image and running containers
+* Solved image tag automation using `jq` + Docker Hub API
+
+---
+
+## Screen Shots
+ ![text](Assets/dep1.png) 
+ ![text](Assets/dep2.png) 
+ ![text](Assets/dep3.png) 
+ ![text](Assets/dep4.png) 
+ 
+ ![text](Assets/dep5.png) 
+ ![text](Assets/dep6.png) 
+ ![text](Assets/dep7.png) 
+ ![text](Assets/dep8.png) 
+ ![text](Assets/dep9.png) 
+ ![text](Assets/dep10.png) 
+ ![text](Assets/dep11.png) 
+ ![text](Assets/dep12.png) 
+ ![text](Assets/dep13.png) 
+ ![text](Assets/dep14.png) 
+ ![text](Assets/dep15.png)
+  ![text](Assets/dep16.png) 
+  ![text](Assets/dep17.png) 
+  ![text](Assets/dep18.png) 
+  ![text](Assets/dep19.png) 
+  ![text](Assets/dep20.png)
