@@ -31,5 +31,5 @@ variable "project_name" {
  variable "key_name" {
     description = "Name of the existing key pair to use for EC2 instance"
     type        = string
-    default     = "ken" 
+    default     = "terraform-deploy" 
  }
