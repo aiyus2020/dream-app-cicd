@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     bucket       = "aiyus-dream-app-setup"
     key          = "backend/terraform.tfstate"
-    region       = var.aws_region
+    region       = "us-east-1"
     profile      = "default"
     use_lockfile = true
   }
@@ -15,5 +15,5 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-1"
 }
