@@ -99,6 +99,7 @@ resource "aws_instance" "ec2" {
   subnet_id                   = aws_subnet.main.id
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = true
+  depends_on = [ aws_internet_gateway.main ]
   user_data     = <<EOF
 #cloud-config
 packages:

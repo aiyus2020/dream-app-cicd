@@ -36,7 +36,6 @@ jobs:
         id: ec2
         run: |
           EC2_IP=$(terraform output -raw ec2_public_ip | tr -d '\n')
-          echo "EC2_IP=$EC2_IP" >> $GITHUB_ENV
           echo "::set-output name=ec2_ip::$EC2_IP"
     outputs:
       ec2_ip: ${{ steps.ec2.outputs.ec2_ip }}
@@ -53,11 +52,11 @@ jobs:
       - name: Install netcat
         run: sudo apt-get update && sudo apt-get install -y netcat-openbsd
 
-      - name: Wait for EC2 SSH
+      - name: Wait for SSH
         run: |
-          echo "⏳ Waiting for SSH on ${{ env.EC2_IP }}:22..."
+          echo "⏳ Waiting for SSH on $EC2_IP:22..."
           for i in {1..30}; do
-            if nc -z ${{ env.EC2_IP }} 22; then
+            if nc -z $EC2_IP 22; then
               echo "✅ SSH is ready!"
               exit 0
             fi
