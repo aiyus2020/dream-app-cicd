@@ -51,7 +51,9 @@ jobs:
       - name: Sync files to EC2 with rsync
         uses: burnett01/rsync-deployments@5.0
         with:
+
           switches: -avz --delete
+          path: ./
           remote_path: /home/ubuntu/dream-vacation
           remote_host: ${{ env.EC2_IP }}
           remote_user: ubuntu
