@@ -34,7 +34,8 @@ jobs:
 
       - name: Get EC2 Public IP
         id: ec2
-        run: echo "ec2_ip=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
+        run: echo "ec2_ip=$(terraform -chdir=./terraform output -raw ec2_public_ip)" >> $GITHUB_OUTPUT
+
   deploy:
     runs-on: ubuntu-latest
     needs: terraform
@@ -47,9 +48,9 @@ jobs:
         uses: burnett01/rsync-deployments@5.0
         with:
             switches: -avz --delete          # <-- only rsync flags go here
-            path: ./                   # adjust to project root if needed
+            path: ./..                 # adjust to project root if needed
             remote_path: /home/ubuntu/dream-vacation
-            remote_host: ${{ env.ec2_ip }}  # <-- dynamic EC2 IP
+            remote_host: ${{ steps.ec2.outputs.ec2_ip }}  # <-- dynamic EC2 IP
             remote_user: ubuntu
             remote_key: ${{ secrets.EC2_SSH_KEY }}
 
@@ -57,7 +58,7 @@ jobs:
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ env.ec2_ip }}
+          host: ${{ steps.ec2.outputs.ec2_ip }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
