@@ -45,7 +45,26 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+       # Install netcat
+      - name: Install netcat
+        run: sudo apt-get update && sudo apt-get install -y netcat-openbsd
 
+    # Wait until SSH is available
+      - name: Wait for EC2 SSH
+        env:
+          EC2_IP: ${{ needs.terraform.outputs.ec2_ip }}
+        run: |
+          echo "⏳ Waiting for SSH on $EC2_IP:22..."
+          for i in {1..30}; do
+          if nc -zv $EC2_IP 22; then
+            echo "✅ SSH is ready!"
+            exit 0
+          fi
+          echo "Retrying in 10s... ($i/30)"
+          sleep 10
+          done
+          echo "❌ Timeout: SSH not available after 5 minutes"
+          exit 1
 
      
       - name: Sync files to EC2 with rsync
