@@ -48,7 +48,8 @@ jobs:
 
       # ✅ Install netcat
       - name: Install netcat
-        run: sudo apt-get update && sudo apt-get install -y netcat
+        run: sudo apt-get update && sudo apt-get install -y netcat-openbsd
+
 
       # ✅ Wait until SSH is available
       - name: Wait for EC2 SSH
