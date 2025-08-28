@@ -54,7 +54,7 @@ jobs:
         uses: burnett01/rsync-deployments@5.0
         with:
           switches: -avz --delete 
-          path: ./
+          path: ./../
           remote_path: /home/ubuntu/dream-vacation
           remote_host: ${{ steps.ec2.outputs.ec2_ip }}
           remote_user: ubuntu
