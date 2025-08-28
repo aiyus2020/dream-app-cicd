@@ -99,8 +99,15 @@ resource "aws_instance" "ec2" {
   subnet_id                   = aws_subnet.main.id
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = true
-  user_data = base64decode(file("user_data.sh"))
-
+  user_data     = <<EOF
+#cloud-config
+packages:
+  - docker.io
+runcmd:
+  - systemctl start docker
+  - systemctl enable docker
+  - usermod -aG docker ubuntu
+EOF
  
   tags = {
     Name = "${var.project_name}-ec2"
