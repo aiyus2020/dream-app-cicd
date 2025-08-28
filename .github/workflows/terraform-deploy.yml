@@ -18,7 +18,7 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
-        
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -45,6 +45,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Get EC2 Public IP
+        id: ec2
+        run: echo "EC2_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
+
       # Sync files to EC2
       - name: Sync files to EC2 with rsync
         uses: burnett01/rsync-deployments@5.0
@@ -52,7 +56,7 @@ jobs:
           switches: -avz --delete 
           path: ./
           remote_path: /home/ubuntu/dream-vacation
-          remote_host: ${{ secrets.EC2_HOST }}
+          remote_host: ${{ env.EC2_IP }}
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
       
@@ -61,7 +65,7 @@ jobs:
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ env.EC2_IP }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
