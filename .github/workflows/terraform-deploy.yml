@@ -49,12 +49,13 @@ jobs:
       - name: Sync files to EC2 with rsync
         uses: burnett01/rsync-deployments@5.0
         with:
-          switches: -avz --delete
-          path: ./../
-          remote_path: /home/ubuntu/dream-vacation
-          remote_host: ${{ needs.terraform.outputs.ec2_ip }}
-          remote_user: ubuntu
-          remote_key: ${{ secrets.EC2_SSH_KEY }}
+            switches: -avz --delete          # <-- only rsync flags go here
+            path: ./../                       # adjust to project root if needed
+            remote_path: /home/ubuntu/dream-vacation
+            remote_host: ${{ needs.terraform.outputs.ec2_ip }}  # <-- dynamic EC2 IP
+            remote_user: ubuntu
+            remote_key: ${{ secrets.EC2_SSH_KEY }}
+
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
