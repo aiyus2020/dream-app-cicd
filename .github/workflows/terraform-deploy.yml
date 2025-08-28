@@ -72,7 +72,7 @@ jobs:
         with:
 
           switches: -avz --delete
-          path: ./
+          path: ./terraform
           remote_path: /home/ubuntu/dream-vacation
           remote_host: ${{ env.EC2_IP }}
           remote_user: ubuntu
