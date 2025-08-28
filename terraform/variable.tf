@@ -27,11 +27,7 @@ variable "project_name" {
   type        = string
   default     = "dream"
 }
- variable "destination_cidr_block" {
-   description = "value for destination_cidr_block in route"
-   type        = string
-   default     = "0.0.0.0/0"
- }
+ 
  variable "key_name" {
     description = "Name of the existing key pair to use for EC2 instance"
     type        = string
