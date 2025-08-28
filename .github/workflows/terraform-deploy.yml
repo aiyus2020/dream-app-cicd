@@ -35,7 +35,7 @@ jobs:
       - name: Get EC2 Public IP
         id: ec2
         run: |
-          EC2_IP=$(terraform output -raw ec2_public_ip | tr -d '\n')
+          EC2_IP=$(terraform output ec2_public_ip | tr -d '\n')
           echo "::set-output name=ec2_ip::$EC2_IP"
     outputs:
       ec2_ip: ${{ steps.ec2.outputs.ec2_ip }}
@@ -49,8 +49,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install netcat
-        run: sudo apt-get update && sudo apt-get install -y netcat-openbsd
 
      
       - name: Sync files to EC2 with rsync
