@@ -12,8 +12,6 @@ jobs:
     defaults:
       run:
         working-directory: ./terraform
-    outputs:
-      ec2_ip: ${{ steps.ec2.outputs.ec2_ip }}   # <-- expose as job output
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,7 +34,7 @@ jobs:
 
       - name: Get EC2 Public IP
         id: ec2
-        run: echo "::set-output name=ec2_ip::$(terraform output -raw ec2_public_ip)"
+        run: echo "ec2_ip=$(terraform -chdir=./terraform output -raw ec2_public_ip)" >> $GITHUB_OUTPUT
 
   deploy:
     runs-on: ubuntu-latest
@@ -52,7 +50,7 @@ jobs:
             switches: -avz --delete          # <-- only rsync flags go here
             path: ./                   # adjust to project root if needed
             remote_path: /home/ubuntu/dream-vacation
-            remote_host: ${{ needs.terraform.outputs.ec2_ip }}  # <-- dynamic EC2 IP
+            remote_host: ${{ env.ec2_ip }}  # <-- dynamic EC2 IP
             remote_user: ubuntu
             remote_key: ${{ secrets.EC2_SSH_KEY }}
 
@@ -60,7 +58,7 @@ jobs:
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ needs.terraform.outputs.ec2_ip }}
+          host: ${{ env.ec2_ip }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
