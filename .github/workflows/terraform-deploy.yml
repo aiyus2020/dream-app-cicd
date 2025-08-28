@@ -47,7 +47,7 @@ jobs:
 
       - name: Get EC2 Public IP
         id: ec2
-        run: echo "EC2_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
+        run: echo "ec2_ip=$(terraform -chdir=./terraform output -raw ec2_public_ip)" >> $GITHUB_OUTPUT
 
       # Sync files to EC2
       - name: Sync files to EC2 with rsync
@@ -56,7 +56,7 @@ jobs:
           switches: -avz --delete 
           path: ./
           remote_path: /home/ubuntu/dream-vacation
-          remote_host: ${{ env.EC2_IP }}
+          remote_host: ${{ steps.ec2.outputs.ec2_ip }}
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
       
@@ -65,7 +65,7 @@ jobs:
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ env.EC2_IP }}
+          host: ${{ steps.ec2.outputs.ec2_ip }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
