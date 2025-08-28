@@ -50,7 +50,7 @@ jobs:
         uses: burnett01/rsync-deployments@5.0
         with:
             switches: -avz --delete          # <-- only rsync flags go here
-            path: ./../                       # adjust to project root if needed
+            path: ./                   # adjust to project root if needed
             remote_path: /home/ubuntu/dream-vacation
             remote_host: ${{ needs.terraform.outputs.ec2_ip }}  # <-- dynamic EC2 IP
             remote_user: ubuntu
