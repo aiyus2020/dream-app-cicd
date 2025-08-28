@@ -3,7 +3,7 @@ terraform {
     bucket       = "aiyus-dream-app-setup"
     key          = "backend/terraform.tfstate"
     region       = "us-east-1"
-    profile      = "default"
+
     use_lockfile = true
   }
   required_providers {
