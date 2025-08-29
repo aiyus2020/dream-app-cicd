@@ -36,8 +36,9 @@ jobs:
         id: ec2
         run: |
           echo EC2_IP=${{needs.terraform.outputs.ec2_public_ip}} >> $GITHUB_ENV
-          echo "EC2_IP
-
+          
+    outputs:
+      ec2_ip: ${{ steps.ec2.outputs.ec2_ip }}
   deploy:
     needs: terraform
     runs-on: ubuntu-latest
