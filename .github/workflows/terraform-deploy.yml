@@ -34,10 +34,9 @@ jobs:
 
       - name: Get EC2 Public IP
         id: ec2
-        run: |
-          echo "EC2_IP=$(terraform output -raw ec2_public_ip)" 
-          echo ${EC2_IP} >> $GITHUB_ENV
-          echo ${GITHUB_ENV}
+        run: echo "EC2_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_OUTPUT
+    outputs:
+      EC2_IP: ${{ steps.ec2.outputs.EC2_IP }}
   deploy:
     needs: terraform
     runs-on: ubuntu-latest
@@ -51,17 +50,16 @@ jobs:
 
     # Wait until SSH is available
       - name: Wait for EC2 SSH
-        env:
-          EC2_IP: ${{ needs.terraform.outputs.ec2_ip }}
         run: |
+          EC2_IP="${{ needs.terraform.outputs.EC2_IP }}"
           echo "⏳ Waiting for SSH on $EC2_IP:22..."
           for i in {1..30}; do
-          if nc -zv $EC2_IP 22; then
-            echo "✅ SSH is ready!"
-            exit 0
-          fi
-          echo "Retrying in 10s... ($i/30)"
-          sleep 10
+            if nc -zv $EC2_IP 22; then
+              echo "✅ SSH is ready!"
+              exit 0
+            fi
+            echo "Retrying in 10s... ($i/30)"
+            sleep 10
           done
           echo "❌ Timeout: SSH not available after 5 minutes"
           exit 1
@@ -70,18 +68,17 @@ jobs:
       - name: Sync files to EC2 with rsync
         uses: burnett01/rsync-deployments@5.0
         with:
-
           switches: -avz --delete
-          path: ./terraform
+          path: ./
           remote_path: /home/ubuntu/dream-vacation
-          remote_host: ${{ env.EC2_IP }}
+          remote_host: ${{ needs.terraform.outputs.EC2_IP }}
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ env.EC2_IP }}
+          host: ${{ needs.terraform.outputs.EC2_IP }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
