@@ -6,9 +6,6 @@ on:
     branches:
       - terra-deploy
 
-permissions:
-      contents: read
-      id-token: write
 jobs:
   terraform:
     runs-on: ubuntu-latest
@@ -39,7 +36,7 @@ jobs:
         id: ec2
         run: |
           echo EC2_IP=${{needs.terraform.outputs.ec2_public_ip}} >> $GITHUB_ENV
-
+          echo "EC2_IP
 
   deploy:
     needs: terraform
