@@ -38,8 +38,7 @@ jobs:
         id: ip
         run: |
           EC2_IP=$(terraform output -raw ec2_public_ip)
-          echo $EC2_IP= >> $GITHUB_OUTPUT
-          echo ip is $EC2_IP
+          echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
 
 
   deploy:
@@ -61,7 +60,7 @@ jobs:
       - name: Wait for EC2 SSH
         run: |
           for i in {1..30}; do
-            if ssh -o StrictHostKeyChecking=no -i ~/.ssh/terraform-deploy ec2_user@${{ needs.terraform.outputs.ec2_ip }} "echo '✅ SSH ready'"; then
+            if ssh -o StrictHostKeyChecking=no -i ~/.ssh/terraform-deploy ubuntu@${{ needs.terraform.outputs.ec2_ip }} "echo '✅ SSH ready'"; then
               echo "EC2 is ready"
               break
             fi
