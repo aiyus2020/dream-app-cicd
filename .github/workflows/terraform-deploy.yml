@@ -19,6 +19,8 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.7.6
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -33,11 +35,12 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
-      - name: Get EC2 Public IP
-        id: ip
+      - name: Get EC2 IP
+        id: ec2
         run: |
           EC2_IP=$(terraform output -raw ec2_public_ip)
-          echo EC2_IP >> $GITHUB_ENV
+          echo "EC2_IP=$EC2_IP" >> $GITHUB_ENV
+          echo "Public IP: $EC2_IP"
           
     
   deploy:
