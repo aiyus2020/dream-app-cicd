@@ -10,7 +10,7 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     outputs:
-      ec2_ip: ${{ steps.ec2.outputs.EC2_IP }}
+      ec2_ip: ${{ steps.get_outputs.outputs.ec2_ip }}
     defaults:
       run:
         working-directory: terraform
@@ -39,8 +39,8 @@ jobs:
         run: |
           EC2_IP=$(terraform output -raw ec2_public_ip)
           echo ${EC2_IP} 
-          echo "EC2_IP=${EC2_IP}" >> $GITHUB_OUTPUT
-   
+          echo "ec2_ip=${EC2_IP}" >> $GITHUB_OUTPUT
+
 
 
   deploy:
