@@ -19,5 +19,5 @@ output "ec2_public_dns" {
 }
 output "ssh_output" {
   description = "Command to SSH into the EC2 instance"
-  value       = "ssh -i ${var.key_name}.pem ubuntu@${aws_instance.ec2.public_ip}"
+  value       = "ssh -i ${var.key_name}.pem ec2-user@${aws_instance.ec2.public_ip}"
 }

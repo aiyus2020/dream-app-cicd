@@ -61,7 +61,7 @@ jobs:
       - name: Wait for EC2 SSH
         run: |
           for i in {1..30}; do
-            if ssh -o StrictHostKeyChecking=no -i ~/.ssh/terraform-deploy ubuntu@${{ needs.terraform.outputs.ec2_ip }} "echo '✅ SSH ready'"; then
+            if ssh -o StrictHostKeyChecking=no -i ~/.ssh/terraform-deploy ec2_user@${{ needs.terraform.outputs.ec2_ip }} "echo '✅ SSH ready'"; then
               echo "EC2 is ready"
               break
             fi
