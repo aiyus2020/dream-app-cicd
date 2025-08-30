@@ -38,8 +38,8 @@ jobs:
         id: ip
         run: |
           EC2_IP=$(terraform output -raw ec2_public_ip)
-          echo ${EC2_IP}= >> $GITHUB_OUTPUT
-
+          echo $EC2_IP= >> $GITHUB_OUTPUT
+          echo ip is $EC2_IP
 
 
   deploy:
