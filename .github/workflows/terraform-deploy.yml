@@ -9,59 +9,36 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    env:
-      TF_LOG: INFO
-
+    defaults:
+      run:
+        working-directory: ./terraform
     steps:
-      # Checkout repo
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.7.5
 
-      # Configure AWS Credentials
-      - name: Configure AWS credentials
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1 # change to your region
+          aws-region: us-east-1
 
-      # Terraform Init
       - name: Terraform Init
         run: terraform init
 
-      # Terraform Plan
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan
-
-      # Terraform Apply
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve
 
-      # Get EC2 Public IP and set as output
       - name: Get EC2 Public IP
-        id: get_ip
+        id: ec2
         run: |
-          EC2_IP=$(terraform output -raw ec2_public_ip)
-          echo "EC2_IP=$EC2_IP" >> $GITHUB_ENV
-          echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
-
-      # Show retrieved IP
-      - name: Print EC2 IP
-        run: echo "EC2 instance IP is ${{ env.EC2_IP }}"
-
-      # Example usage: SSH into EC2
-      - name: Test SSH connection
-        if: ${{ env.EC2_IP != '' }}
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ env.EC2_IP }} "echo 'Hello from GitHub Actions'"
+          EC2_IP=$(terraform output -raw ec2_public_ip 2>/dev/null)
+          echo ${EC2_IP} 
+          echo ${EC2_IP}" >> $GITHUB_ENV
+   
 
 
   deploy:
