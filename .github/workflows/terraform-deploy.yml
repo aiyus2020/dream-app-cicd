@@ -36,7 +36,7 @@ jobs:
         id: ec2
         run: |
           EC2_IP=$(terraform output -raw ec2_public_ip 2>/dev/null)
-          echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
+          echo "ec2_ip=$EC2_IP" >> $GITHUB_ENV
     outputs:
       EC2_IP: ${{ steps.ec2.outputs.ec2_ip }}
 
