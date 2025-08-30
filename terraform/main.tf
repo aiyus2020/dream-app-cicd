@@ -92,6 +92,7 @@ data "aws_ami" "ubuntu" {
 }
 
 # EC2 Instance
+# EC2 Instance
 resource "aws_instance" "ec2" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
@@ -99,18 +100,46 @@ resource "aws_instance" "ec2" {
   subnet_id                   = aws_subnet.main.id
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = true
-  depends_on = [ aws_internet_gateway.main ]
+  depends_on                  = [aws_internet_gateway.main]
   
   user_data     = <<EOF
 #cloud-config
 packages:
   - docker.io
+  - amazon-cloudwatch-agent
+
 runcmd:
   - systemctl start docker
   - systemctl enable docker
   - usermod -aG docker ubuntu
+
+  # Write CloudWatch agent config
+  - mkdir -p /opt/aws/amazon-cloudwatch-agent/etc
+  - cat <<EOT > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+{
+  "metrics": {
+    "metrics_collected": {
+      "cpu": {
+        "measurement": [
+          "cpu_usage_idle",
+          "cpu_usage_user",
+          "cpu_usage_system"
+        ],
+        "metrics_collection_interval": 60
+      }
+    }
+  }
+}
+EOT
+
+  # Start CloudWatch agent
+  - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+      -a fetch-config \
+      -m ec2 \
+      -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
+      -s
 EOF
- 
+
   tags = {
     Name = "${var.project_name}-ec2"
   }
