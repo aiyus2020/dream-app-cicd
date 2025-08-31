@@ -105,8 +105,8 @@ resource "aws_instance" "ec2" {
  
   user_data = <<EOF
 #!/bin/bash
-sudo pt-get update
-sudo apt-get install -y docker.io docker-compose
+sudo apt update
+sudo apt install -y docker.io docker-compose
 
 # Start and enable Docker
 sudo systemctl start docker
