@@ -39,7 +39,7 @@ jobs:
         id: ec2
         run: |
           EC2_IP=$(terraform output -raw ec2_public_ip)
-          echo "EC2_IP=$EC2_IP" >> $GITHUB_INPUTS
+          echo "EC2_IP=$EC2_IP" > $GITHUB_INPUTS
           
 
 
