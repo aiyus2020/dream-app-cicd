@@ -93,5 +93,5 @@ jobs:
               POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
-            docker compose pull
-            docker compose up -d --remove-orphans
+            docker-compose pull
+            docker-compose up -d --remove-orphans
