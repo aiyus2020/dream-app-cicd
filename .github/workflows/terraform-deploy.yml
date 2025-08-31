@@ -36,12 +36,13 @@ jobs:
       - name: Get EC2 Public IP
         id: ec2
         run: |
-          EC2_IP=$(terraform output -raw ec2_public_ip)
-          echo EC2_IP=$EC2_IP
+          EC2_IP=$(terraform output -raw ec2_public_ip | head -n1)
           echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
+          echo "Resolved EC2 IP: $EC2_IP"
           
     outputs:
       ec2_ip: ${{ steps.ec2.outputs.ec2_ip }}
+
 
   deploy:
     needs: terraform
