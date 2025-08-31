@@ -106,6 +106,7 @@ resource "aws_instance" "ec2" {
 #cloud-config
 packages:
   - docker.io
+  - docker-compose-plugin
   - amazon-cloudwatch-agent
 
 runcmd:
