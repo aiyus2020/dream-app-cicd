@@ -1,48 +1,40 @@
 name: Deploy Dream Vacation App
-
 on:
   workflow_dispatch:
   push:
     branches:
       - terra-deploy
-
 jobs:
   terraform:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./terraform
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
-
+        with:
+          terraform_wrapper: false  # Important: disable wrapper for raw output
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-
       - name: Terraform Init
         run: terraform init
-
       - name: Terraform Apply
         run: terraform apply -auto-approve
-
       - name: Get EC2 Public IP
         id: ec2
         run: |
-          EC2_IP=$(terraform output -raw ec2_public_ip | head -n1)
+          EC2_IP=$(terraform output -raw ec2_public_ip)
+          echo "EC2_IP=$EC2_IP"
           echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
-          echo "Resolved EC2 IP: $EC2_IP"
-          
     outputs:
-      ec2_ip: ${{ steps.ec2.outputs.ec2_ip }}
-
+      ec2_ip: ${{ steps.ec2.outputs.ec2_ip }} 
 
   deploy:
     needs: terraform
