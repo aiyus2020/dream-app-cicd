@@ -76,7 +76,7 @@ jobs:
           remote_host: ${{ steps.ec2.outputs.ec2_ip }}
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
-
+#deploy app on EC2
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
