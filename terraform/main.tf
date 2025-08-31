@@ -102,43 +102,63 @@ resource "aws_instance" "ec2" {
   associate_public_ip_address = true
   depends_on                  = [aws_internet_gateway.main]
   
-  user_data     = <<EOF
-#cloud-config
-packages:
-  - docker.io
-  - docker-compose-plugin
-  - amazon-cloudwatch-agent
+ 
+  user_data = <<EOF
+#!/bin/bash
+apt-get update
+apt-get install -y docker.io docker-compose
 
-runcmd:
-  - systemctl start docker
-  - systemctl enable docker
-  - usermod -aG docker ubuntu
+# Start and enable Docker
+systemctl start docker
+systemctl enable docker
+usermod -aG docker ubuntu
 
-  # Write CloudWatch agent config
-  - mkdir -p /opt/aws/amazon-cloudwatch-agent/etc
-  - cat <<EOT > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+# Install CloudWatch Agent
+wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+dpkg -i -E ./amazon-cloudwatch-agent.deb
+
+# Create CloudWatch Agent config
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOL'
 {
+  "agent": {
+    "metrics_collection_interval": 60,
+    "run_as_user": "cwagent"
+  },
   "metrics": {
+    "namespace": "CWAgent",
     "metrics_collected": {
       "cpu": {
         "measurement": [
           "cpu_usage_idle",
+          "cpu_usage_iowait",
           "cpu_usage_user",
           "cpu_usage_system"
+        ],
+        "metrics_collection_interval": 60,
+        "totalcpu": false
+      },
+      "disk": {
+        "measurement": [
+          "used_percent"
+        ],
+        "metrics_collection_interval": 60,
+        "resources": [
+          "*"
+        ]
+      },
+      "mem": {
+        "measurement": [
+          "mem_used_percent"
         ],
         "metrics_collection_interval": 60
       }
     }
   }
 }
-EOT
+EOL
 
-  # Start CloudWatch agent
-  - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-      -a fetch-config \
-      -m ec2 \
-      -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
-      -s
+# Start CloudWatch Agent
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
 EOF
 
   tags = {

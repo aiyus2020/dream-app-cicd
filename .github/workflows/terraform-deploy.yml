@@ -25,6 +25,11 @@ jobs:
           aws-region: us-east-1
       - name: Terraform Init
         run: terraform init
+      - name: Recreate EC2 instance
+        run: |
+          terraform destroy -target=aws_instance.ec2 -auto-approve
+          terraform apply -auto-approve
+
       - name: Terraform Apply
         run: terraform apply -auto-approve
       - name: Get EC2 Public IP
