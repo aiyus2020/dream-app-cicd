@@ -9,6 +9,8 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    outputs:
+      ec2_ip: ${{ steps.ec2.ec2_public_ip}}
     defaults:
       run:
         working-directory: ./terraform
@@ -37,7 +39,7 @@ jobs:
         id: ec2
         run: |
           EC2_IP=$(terraform output -raw ec2_public_ip)
-          echo "EC2_IP=$EC2_IP" >> $GITHUB_ENV
+          echo "EC2_IP=$EC2_IP" >> $GITHUB_INPUTS
           echo "Public IP: $EC2_IP"
 
 
@@ -58,7 +60,7 @@ jobs:
       - name: Wait for EC2 SSH
         run: |
           for i in {1..30}; do
-            if ssh -o StrictHostKeyChecking=no -i ~/.ssh/terraform-deploy ubuntu@${{ env.EC2_IP }} "echo '✅ SSH ready'"; then
+            if ssh -o StrictHostKeyChecking=no -i ~/.ssh/terraform-deploy ubuntu@${{ steps.ec2.outputs.ec2_ip }} "echo '✅ SSH ready'"; then
               echo "EC2 is ready"
               break
             fi
@@ -71,14 +73,14 @@ jobs:
           switches: -avz --delete
           path: ./ 
           remote_path: /home/ubuntu/dream-vacation
-          remote_host: ${{ env.EC2_IP }}
+          remote_host: ${{ steps.ec2.outputs.ec2_ip }}
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ env.EC2_IP }}
+          host: ${{ steps }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
