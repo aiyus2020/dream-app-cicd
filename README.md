@@ -285,3 +285,85 @@ This allowed the workflow to dynamically fetch and deploy the most up-to-date im
   ![text](Assets/dep18.png) 
   ![text](Assets/dep19.png) 
   ![text](Assets/dep20.png)
+
+Here’s a polished **README.md** version based on your description, written in a professional, structured way with first-person pronouns and clear sections:
+
+````markdown
+# 🧭 Dream Vacation App – Terraform + GitHub Actions Deployment
+
+I have extended the deployment of the **Dream Vacation App** to include **infrastructure provisioning with Terraform** and an accompanying **GitHub Actions workflow** to deploy the Dockerized app to AWS.
+
+---
+
+## 🌿 Branch Setup
+
+I created a new branch for this workflow:  
+
+```bash
+git checkout -b terra-deploy
+````
+
+---
+
+## 🛠 Terraform Configuration
+
+I wrote Terraform configurations to provision all required AWS infrastructure, including:
+
+* **VPC, Subnets, Internet Gateway, and Route Tables**
+* **EC2 Instances** (Ubuntu-based, e.g., t2.micro or suitable size)
+* **Security Groups** allowing HTTP, HTTPS, and SSH access
+* **Credentials and environment management**
+* **User data** to install Docker and Docker Compose automatically
+
+This setup ensures a **repeatable and fully managed infrastructure** for running my Dockerized application.
+
+---
+
+## ⚡ GitHub Actions Workflow
+
+I created a workflow at `.github/workflows/terraform-deploy.yml` which automates both infrastructure provisioning and application deployment.
+
+The workflow performs:
+
+1. **Checkout and authenticate** to AWS using GitHub Secrets.
+2. **Terraform init, plan, and apply** to create or update the infrastructure.
+3. **SSH into the EC2 instance** to:
+
+   * Pull the latest Docker images (from Docker Hub or a registry)
+   * Update environment variables for Docker Compose
+   * Pull and restart containers to apply the newest version
+
+---
+
+## 🧩 How Terraform + GitHub Actions Deployment Works
+
+### Terraform
+
+* Creates all AWS networking and compute resources
+* Installs Docker and Docker Compose on the EC2 instance via user data
+* Ensures security and connectivity for the app
+
+### GitHub Actions
+
+* Automates provisioning and deployment steps
+* Fetches the latest Docker image tags programmatically
+* Passes image tags to Docker Compose to ensure the EC2 instance always runs the latest app version
+* Restarts containers to deploy updates seamlessly
+
+---
+
+## ✅ Outcome
+
+By combining **Terraform** for infrastructure and **GitHub Actions** for deployment, I can now:
+
+* Provision a complete AWS environment for my app
+* Automatically deploy the latest Dockerized frontend and backend
+* Ensure a fully automated, reproducible, and production-ready setup
+
+---
+
+This setup demonstrates **modern DevOps practices**: Infrastructure as Code (Terraform), CI/CD (GitHub Actions), and containerized application deployment (Docker + Docker Compose).
+
+```
+
+
