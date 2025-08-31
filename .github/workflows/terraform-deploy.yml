@@ -82,12 +82,12 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Avoid apt lock errors
+           
             sudo bash -c 'while fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do sleep 5; done'
             sudo apt-get update -y
             sudo apt-get install -y jq docker.io docker-compose-plugin
 
-            # Ensure docker is running
+           
             sudo systemctl enable --now docker
             sudo usermod -aG docker ubuntu
 
@@ -106,6 +106,6 @@ jobs:
               POSTGRES_PASSWORD=***
             EOF
 
-            # Use new Docker Compose V2 syntax
+          
             docker compose pull
             docker compose up -d --remove-orphans
