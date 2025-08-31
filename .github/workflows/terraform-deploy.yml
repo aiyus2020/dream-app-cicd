@@ -78,6 +78,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             sudo apt update && sudo apt install -y jq
+            mkdir -p /home/ubuntu/dream-vacation
             cd /home/ubuntu/dream-vacation
 
             FRONTEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-frontend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
