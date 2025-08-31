@@ -103,10 +103,10 @@ jobs:
             cat <<EOF > .env
               FRONTEND_TAG=${FRONTEND_SHA}
               BACKEND_TAG=${BACKEND_SHA}
-              DB_PORT=***
-              POSTGRES_DB=***
-              POSTGRES_USER=***
-              POSTGRES_PASSWORD=***
+              DB_PORT=${{ secrets.DB_PORT }}
+              POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
           
