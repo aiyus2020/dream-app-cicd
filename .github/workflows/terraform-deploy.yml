@@ -105,12 +105,12 @@ jobs:
             BACKEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-backend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
 
             cat <<EOF > .env
-              FRONTEND_TAG=${FRONTEND_SHA}
-              BACKEND_TAG=${BACKEND_SHA}
-              DB_PORT=${{ secrets.DB_PORT }}
-              POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            FRONTEND_TAG=${FRONTEND_SHA}
+            BACKEND_TAG=${BACKEND_SHA}
+            DB_PORT=${{ secrets.DB_PORT }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
           
