@@ -105,12 +105,12 @@ resource "aws_instance" "ec2" {
  
   user_data = <<EOF
 #!/bin/bash
-apt-get update
-apt-get install -y docker.io docker-compose
+sudo pt-get update
+sudo apt-get install -y docker.io docker-compose
 
 # Start and enable Docker
-systemctl start docker
-systemctl enable docker
+sudo systemctl start docker
+sudo systemctl enable docker
 usermod -aG docker ubuntu
 
 # Install CloudWatch Agent
