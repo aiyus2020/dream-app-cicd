@@ -41,7 +41,7 @@ jobs:
           echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
           
     outputs:
-      ec2_ip: ${{ steps.ec2.outputs.ec2_public_ip }} 
+      ec2_ip: ${{ steps.ec2.output.ec2_ip }} 
 
   deploy:
     needs: terraform
