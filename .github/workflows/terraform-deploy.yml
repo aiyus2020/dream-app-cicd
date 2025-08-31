@@ -82,7 +82,15 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sudo apt update && sudo apt install -y jq
+            # Avoid apt lock errors
+            sudo bash -c 'while fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do sleep 5; done'
+            sudo apt-get update -y
+            sudo apt-get install -y jq docker.io docker-compose-plugin
+
+            # Ensure docker is running
+            sudo systemctl enable --now docker
+            sudo usermod -aG docker ubuntu
+
             mkdir -p /home/ubuntu/dream-vacation
             cd /home/ubuntu/dream-vacation
 
@@ -92,11 +100,12 @@ jobs:
             cat <<EOF > .env
               FRONTEND_TAG=${FRONTEND_SHA}
               BACKEND_TAG=${BACKEND_SHA}
-              DB_PORT=${{ secrets.DB_PORT }}
-              POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+              DB_PORT=***
+              POSTGRES_DB=***
+              POSTGRES_USER=***
+              POSTGRES_PASSWORD=***
             EOF
 
-            docker-compose pull
-            docker-compose up -d --remove-orphans
+            # Use new Docker Compose V2 syntax
+            docker compose pull
+            docker compose up -d --remove-orphans
