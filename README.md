@@ -365,5 +365,10 @@ By combining **Terraform** for infrastructure and **GitHub Actions** for deploym
 This setup demonstrates **modern DevOps practices**: Infrastructure as Code (Terraform), CI/CD (GitHub Actions), and containerized application deployment (Docker + Docker Compose).
 
 ```
-
+## Screen Shots
+ ![text](Assets/terra1.png) 
+ ![text](Assets/terra2.png) 
+ ![text](Assets/terra3.png) 
+ ![text](Assets/terra4.png) 
+ 
 
