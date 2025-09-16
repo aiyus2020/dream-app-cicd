@@ -104,7 +104,7 @@ resource "aws_key_pair" "ec2_key" {
 
 # Save private key locally (PEM file)
 resource "local_file" "private_key" {
-  content  = tls_private_key.ssh_key.private_key_pem
+  content  = tls_private_key.ssh_key.private_key_openssh
   filename = "${path.module}/terraform-deploy.pem"
 }
 
