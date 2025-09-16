@@ -62,7 +62,7 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/terraform-deploy
+          echo "${PRIVATE_KEY}" > ~/.ssh/terraform-deploy
           chmod 600 ~/.ssh/terraform-deploy
 
       - name: Wait for EC2 SSH
