@@ -83,14 +83,14 @@ jobs:
           remote_path: /home/ubuntu/dream-vacation
           remote_host: ${{ needs.terraform.outputs.ec2_ip }}
           remote_user: ubuntu
-          remote_key: ${{ secrets.EC2_SSH_KEY }}
+          remote_key: ${{ github.workspace }}/.ssh/terraform-deploy
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ needs.terraform.outputs.ec2_ip }}  # Use terraform output
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ github.workspace }}/.ssh/terraform-deploy
           script: |
             # Update packages and install jq
             sudo apt update 
