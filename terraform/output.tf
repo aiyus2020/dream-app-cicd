@@ -22,7 +22,3 @@ output "ssh_output" {
   value       = "ssh -i ${var.key_name}.pem ubuntu@${aws_instance.ec2.public_ip}"
 }
 
-output "ec2_private_key" {
-  value     = tls_private_key.ssh_key.private_key_pem
-  sensitive = true
-}
