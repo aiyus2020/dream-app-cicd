@@ -101,24 +101,48 @@ resource "aws_instance" "ec2" {
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = true
   depends_on                  = [aws_internet_gateway.main]
-  
- 
-  user_data = <<EOF
-#!/bin/bash
-sudo apt-get update
-sudo apt-get install -y docker.io docker-compose
 
-# Start and enable Docker
-sudo systemctl start docker
+
+    user_data = <<EOF
+#!/bin/bash
+set -e
+
+# Update system
+sudo apt-get update -y
+sudo apt-get upgrade -y
+
+# Install dependencies for Docker
+sudo apt-get install -y \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+
+# Add Docker’s official GPG key
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+  sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# Setup Docker repo
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker Engine + Compose v2
+sudo apt-get update -y
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# Enable and start Docker
 sudo systemctl enable docker
+sudo systemctl start docker
 sudo usermod -aG docker ubuntu
 
 # Install CloudWatch Agent
 wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
-dpkg -i -E ./amazon-cloudwatch-agent.deb
+sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
 
-# Create CloudWatch Agent config
-cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOL'
+# CloudWatch config (metrics + Docker logs)
+sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /dev/null << 'EOL'
 {
   "agent": {
     "metrics_collection_interval": 60,
@@ -130,27 +154,32 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOL'
       "cpu": {
         "measurement": [
           "cpu_usage_idle",
-          "cpu_usage_iowait",
           "cpu_usage_user",
           "cpu_usage_system"
         ],
-        "metrics_collection_interval": 60,
-        "totalcpu": false
+        "metrics_collection_interval": 60
       },
       "disk": {
-        "measurement": [
-          "used_percent"
-        ],
+        "measurement": ["used_percent"],
         "metrics_collection_interval": 60,
-        "resources": [
-          "*"
-        ]
+        "resources": ["*"]
       },
       "mem": {
-        "measurement": [
-          "mem_used_percent"
-        ],
+        "measurement": ["mem_used_percent"],
         "metrics_collection_interval": 60
+      }
+    }
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/lib/docker/containers/*/*.log",
+            "log_group_name": "docker-logs",
+            "log_stream_name": "{instance_id}"
+          }
+        ]
       }
     }
   }
@@ -158,8 +187,11 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOL'
 EOL
 
 # Start CloudWatch Agent
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a fetch-config -m ec2 \
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
 EOF
+
 
   tags = {
     Name = "${var.project_name}-ec2"
