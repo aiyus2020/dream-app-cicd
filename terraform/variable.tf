@@ -33,3 +33,8 @@ variable "project_name" {
     type        = string
     default     = "terraform-deploy" 
  }
+
+ variable "private_key" {
+  type      = string
+  sensitive = true
+}
