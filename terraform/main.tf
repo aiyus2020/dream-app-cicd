@@ -134,7 +134,7 @@ resource "aws_instance" "ec2" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = "~/.ssh/your-key.pem"
+      private_key = "terraform-deploy" # path to your .pem key
       host        = self.public_ip
     }
   }
