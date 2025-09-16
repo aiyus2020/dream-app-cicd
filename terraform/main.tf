@@ -89,24 +89,6 @@ resource "aws_security_group" "ec2_sg" {
   }
 }
 
-# --------------------------
-# Key Pair (Terraform-generated)
-# --------------------------
-resource "tls_private_key" "ssh_key" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-resource "aws_key_pair" "ec2_key" {
-  key_name   = "${var.project_name}-key"
-  public_key = tls_private_key.ssh_key.public_key_openssh
-}
-
-# Save private key locally (PEM file)
-resource "local_file" "private_key" {
-  content  = tls_private_key.ssh_key.private_key_openssh
-  filename = "${path.module}/terraform-deploy.pem"
-}
 
 # --------------------------
 # Ubuntu AMI
@@ -130,7 +112,7 @@ resource "aws_instance" "ec2" {
   subnet_id                   = aws_subnet.main.id
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = true
-  key_name                    = aws_key_pair.ec2_key.key_name
+  key_name                    = "terraform-deploy"
   depends_on                  = [aws_internet_gateway.main]
 
   provisioner "remote-exec" {
@@ -151,7 +133,7 @@ resource "aws_instance" "ec2" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = tls_private_key.ssh_key.private_key_openssh
+      private_key = file("${path.module}/terraform-deploy.pem")
       host        = self.public_ip
     }
   }

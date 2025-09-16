@@ -32,16 +32,6 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
-      - name: Get Terraform Outputs
-        id: tfout
-        run: |
-          PRIVATE_KEY=$(terraform output -raw ec2_private_key)
-          echo "PRIVATE_KEY<<EOF" >> $GITHUB_ENV
-          echo "$PRIVATE_KEY" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          EC2_IP=$(terraform output -raw ec2_public_ip)
-          echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
-
       - name: Get EC2 Public IP
         id: ec2
         run: |
@@ -62,7 +52,7 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${PRIVATE_KEY}" > ~/.ssh/terraform-deploy
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/terraform-deploy
           chmod 600 ~/.ssh/terraform-deploy
 
       - name: Wait for EC2 SSH
@@ -83,22 +73,16 @@ jobs:
           remote_path: /home/ubuntu/dream-vacation
           remote_host: ${{ needs.terraform.outputs.ec2_ip }}
           remote_user: ubuntu
-          remote_key: ${{ github.workspace }}/.ssh/terraform-deploy
+          remote_key: ${{ secrets.EC2_SSH_KEY }}
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ needs.terraform.outputs.ec2_ip }}  # Use terraform output
           username: ubuntu
-          key: ${{ github.workspace }}/.ssh/terraform-deploy
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Update packages and install jq
-            sudo apt update 
-            sudo apt install -y jq 
-            
-            
-            # Verify installation
-            docker-compose --version
+           
             
             # Navigate to app directory
             mkdir -p /home/ubuntu/dream-vacation
@@ -108,12 +92,12 @@ jobs:
             BACKEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-backend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
 
             cat <<EOF > .env
-            FRONTEND_TAG=${FRONTEND_SHA}
-            BACKEND_TAG=${BACKEND_SHA}
-            DB_PORT=${{ secrets.DB_PORT }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+              FRONTEND_TAG=${FRONTEND_SHA}
+              BACKEND_TAG=${BACKEND_SHA}
+              DB_PORT=${{ secrets.DB_PORT }}
+              POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
           
