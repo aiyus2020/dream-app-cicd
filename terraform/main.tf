@@ -1,4 +1,10 @@
+provider "aws" {
+  region = var.aws_region
+}
+
+# --------------------------
 # VPC
+# --------------------------
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
   tags = {
@@ -6,7 +12,9 @@ resource "aws_vpc" "main" {
   }
 }
 
+# --------------------------
 # Subnet
+# --------------------------
 resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.subnet_cidr
@@ -17,7 +25,9 @@ resource "aws_subnet" "main" {
   }
 }
 
+# --------------------------
 # Internet Gateway
+# --------------------------
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
   tags = {
@@ -25,7 +35,9 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
+# --------------------------
 # Route Table
+# --------------------------
 resource "aws_route_table" "main" {
   vpc_id = aws_vpc.main.id
   tags = {
@@ -33,25 +45,24 @@ resource "aws_route_table" "main" {
   }
 }
 
-# Route to Internet
 resource "aws_route" "default" {
   route_table_id         = aws_route_table.main.id
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = aws_internet_gateway.main.id
 }
 
-# Associate Route Table
 resource "aws_route_table_association" "main" {
   subnet_id      = aws_subnet.main.id
   route_table_id = aws_route_table.main.id
 }
 
+# --------------------------
 # Security Group
+# --------------------------
 resource "aws_security_group" "ec2_sg" {
   vpc_id = aws_vpc.main.id
   name   = "${var.project_name}-sg"
 
-  # SSH
   ingress {
     from_port   = 22
     to_port     = 22
@@ -59,7 +70,6 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # HTTP
   ingress {
     from_port   = 80
     to_port     = 80
@@ -67,7 +77,6 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Backend port (example: Node.js app on 3001)
   ingress {
     from_port   = 3001
     to_port     = 3001
@@ -75,7 +84,6 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Egress (all traffic allowed)
   egress {
     from_port   = 0
     to_port     = 0
@@ -84,10 +92,31 @@ resource "aws_security_group" "ec2_sg" {
   }
 }
 
-# Get latest Ubuntu AMI
+# --------------------------
+# Key Pair (Terraform-generated)
+# --------------------------
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "ec2_key" {
+  key_name   = "${var.project_name}-key"
+  public_key = tls_private_key.ssh_key.public_key_openssh
+}
+
+# Save private key locally (PEM file)
+resource "local_file" "private_key" {
+  content  = tls_private_key.ssh_key.private_key_pem
+  filename = "${path.module}/terraform-deploy.pem"
+}
+
+# --------------------------
+# Ubuntu AMI
+# --------------------------
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"] # Canonical
+  owners      = ["099720109477"]
 
   filter {
     name   = "name"
@@ -95,46 +124,37 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# EC2 Instance with remote-exec provisioning
+# --------------------------
+# EC2 Instance with remote-exec
+# --------------------------
 resource "aws_instance" "ec2" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
-  key_name                    = var.key_name
   subnet_id                   = aws_subnet.main.id
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = true
+  key_name                    = aws_key_pair.ec2_key.key_name
   depends_on                  = [aws_internet_gateway.main]
 
-  # Remote exec provisioner
   provisioner "remote-exec" {
     inline = [
-      # Update & upgrade
       "sudo apt-get update -y",
       "sudo apt-get upgrade -y",
-
-      # Install Docker dependencies
       "sudo apt-get install -y ca-certificates curl gnupg lsb-release",
-
-      # Add Docker GPG key
       "sudo mkdir -p /etc/apt/keyrings",
       "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
-
-      # Setup Docker repo
       "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
-
-      # Install Docker
       "sudo apt-get update -y",
       "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin",
       "sudo systemctl enable docker",
       "sudo systemctl start docker",
-      "sudo usermod -aG docker ubuntu",
-
-     ]
+      "sudo usermod -aG docker ubuntu"
+    ]
 
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = "terraform-deploy" # path to your .pem key
+      private_key = tls_private_key.ssh_key.private_key_pem
       host        = self.public_ip
     }
   }
@@ -144,7 +164,9 @@ resource "aws_instance" "ec2" {
   }
 }
 
-# CloudWatch Alarm
+# --------------------------
+# CloudWatch CPU Alarm
+# --------------------------
 resource "aws_cloudwatch_metric_alarm" "cpu_alarm" {
   alarm_name          = "${var.project_name}-high-cpu"
   comparison_operator = "GreaterThanThreshold"
@@ -155,7 +177,23 @@ resource "aws_cloudwatch_metric_alarm" "cpu_alarm" {
   statistic           = "Average"
   threshold           = 70
   alarm_description   = "Trigger if CPU > 70% for 2 minutes"
+
   dimensions = {
     InstanceId = aws_instance.ec2.id
   }
+}
+
+# --------------------------
+# Outputs
+# --------------------------
+output "ec2_public_ip" {
+  value = aws_instance.ec2.public_ip
+}
+
+output "ec2_public_dns" {
+  value = aws_instance.ec2.public_dns
+}
+
+output "ssh_command" {
+  value = "ssh -i terraform-deploy.pem ubuntu@${aws_instance.ec2.public_ip}"
 }
