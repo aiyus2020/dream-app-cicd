@@ -119,6 +119,7 @@ resource "aws_instance" "ec2" {
     inline = [
       "sudo apt-get update -y",
       "sudo apt-get upgrade -y",
+      "sudo apt install jq -y",
       "sudo apt-get install -y ca-certificates curl gnupg lsb-release",
       "sudo mkdir -p /etc/apt/keyrings",
       "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
