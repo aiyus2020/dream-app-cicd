@@ -32,6 +32,16 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
+      - name: Get Terraform Outputs
+        id: tfout
+        run: |
+          PRIVATE_KEY=$(terraform output -raw ec2_private_key)
+          echo "PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+          echo "$PRIVATE_KEY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          EC2_IP=$(terraform output -raw ec2_public_ip)
+          echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
+
       - name: Get EC2 Public IP
         id: ec2
         run: |
