@@ -103,7 +103,7 @@ resource "aws_instance" "ec2" {
   depends_on                  = [aws_internet_gateway.main]
 
 
-    user_data = <<EOF
+    user_data = <<EOF 
 #!/bin/bash
 set -e
 
