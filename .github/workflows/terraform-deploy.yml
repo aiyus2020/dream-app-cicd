@@ -82,7 +82,17 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-           
+            # Update packages and install jq
+            sudo apt update 
+            sudo apt install -y jq 
+            
+            # Install Docker Compose V2 (modern version)
+            DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)
+            sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            
+            # Verify installation
+            docker-compose --version
             
             # Navigate to app directory
             mkdir -p /home/ubuntu/dream-vacation
@@ -92,14 +102,14 @@ jobs:
             BACKEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-backend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
 
             cat <<EOF > .env
-              FRONTEND_TAG=${FRONTEND_SHA}
-              BACKEND_TAG=${BACKEND_SHA}
-              DB_PORT=${{ secrets.DB_PORT }}
-              POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            FRONTEND_TAG=${FRONTEND_SHA}
+            BACKEND_TAG=${BACKEND_SHA}
+            DB_PORT=${{ secrets.DB_PORT }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
           
-            docker compose pull
-            docker compose up -d --remove-orphans
+            docker-compose pull
+            docker-compose up -d --remove-orphans
