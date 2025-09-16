@@ -33,6 +33,7 @@ resource "aws_route_table" "main" {
   }
 }
 
+# Route to Internet
 resource "aws_route" "default" {
   route_table_id         = aws_route_table.main.id
   destination_cidr_block = "0.0.0.0/0"
@@ -50,28 +51,31 @@ resource "aws_security_group" "ec2_sg" {
   vpc_id = aws_vpc.main.id
   name   = "${var.project_name}-sg"
 
-# SSH
+  # SSH
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-# HTTP
+
+  # HTTP
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-# Backend
-  ingress  {
+
+  # Backend port (example: Node.js app on 3001)
+  ingress {
     from_port   = 3001
     to_port     = 3001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Egress (all traffic allowed)
   egress {
     from_port   = 0
     to_port     = 0
@@ -91,8 +95,7 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# EC2 Instance
-# EC2 Instance
+# EC2 Instance with remote-exec provisioning
 resource "aws_instance" "ec2" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
@@ -102,96 +105,39 @@ resource "aws_instance" "ec2" {
   associate_public_ip_address = true
   depends_on                  = [aws_internet_gateway.main]
 
+  # Remote exec provisioner
+  provisioner "remote-exec" {
+    inline = [
+      # Update & upgrade
+      "sudo apt-get update -y",
+      "sudo apt-get upgrade -y",
 
-    user_data = <<EOF
-#!/bin/bash
-set -e
+      # Install Docker dependencies
+      "sudo apt-get install -y ca-certificates curl gnupg lsb-release",
 
-# Update system
-sudo apt-get update -y
-sudo apt-get upgrade -y
+      # Add Docker GPG key
+      "sudo mkdir -p /etc/apt/keyrings",
+      "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
 
-# Install dependencies for Docker
-sudo apt-get install -y \
-    ca-certificates \
-    curl \
-    gnupg \
-    lsb-release
+      # Setup Docker repo
+      "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
 
-# Add Docker’s official GPG key
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
-  sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      # Install Docker
+      "sudo apt-get update -y",
+      "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin",
+      "sudo systemctl enable docker",
+      "sudo systemctl start docker",
+      "sudo usermod -aG docker ubuntu",
 
-# Setup Docker repo
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-  https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+     ]
 
-# Install Docker Engine + Compose v2
-sudo apt-get update -y
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-
-# Enable and start Docker
-sudo systemctl enable docker
-sudo systemctl start docker
-sudo usermod -aG docker ubuntu
-
-# Install CloudWatch Agent
-wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
-sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
-
-# CloudWatch config (metrics + Docker logs)
-sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /dev/null << 'EOL'
-{
-  "agent": {
-    "metrics_collection_interval": 60,
-    "run_as_user": "cwagent"
-  },
-  "metrics": {
-    "namespace": "CWAgent",
-    "metrics_collected": {
-      "cpu": {
-        "measurement": [
-          "cpu_usage_idle",
-          "cpu_usage_user",
-          "cpu_usage_system"
-        ],
-        "metrics_collection_interval": 60
-      },
-      "disk": {
-        "measurement": ["used_percent"],
-        "metrics_collection_interval": 60,
-        "resources": ["*"]
-      },
-      "mem": {
-        "measurement": ["mem_used_percent"],
-        "metrics_collection_interval": 60
-      }
-    }
-  },
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [
-          {
-            "file_path": "/var/lib/docker/containers/*/*.log",
-            "log_group_name": "docker-logs",
-            "log_stream_name": "{instance_id}"
-          }
-        ]
-      }
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = "~/.ssh/your-key.pem"
+      host        = self.public_ip
     }
   }
-}
-EOL
-
-# Start CloudWatch Agent
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-  -a fetch-config -m ec2 \
-  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
-EOF
-
 
   tags = {
     Name = "${var.project_name}-ec2"
