@@ -33,6 +33,7 @@ jobs:
       - name: Terraform Apply
         env:
           TF_VAR_private_key: ${{ secrets.EC2_SSH_KEY }}
+          TF_VAR_elastic_ip: ${{ secrets.EC2_ELASTIC_IP }}
         run: terraform apply -auto-approve
 
       - name: Set EC2 Elastic IP

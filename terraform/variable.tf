@@ -38,3 +38,8 @@ variable "project_name" {
   type      = string
   sensitive = true
 }
+
+variable "elastic_ip" {
+  description = "Existing Elastic IP to associate with the EC2 instance"
+  type        = string
+}

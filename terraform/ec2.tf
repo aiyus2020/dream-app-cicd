@@ -86,7 +86,7 @@ resource "aws_instance" "ec2" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = var.private_key
-      host        = aws_eip.ec2_eip.public_ip
+      host = data.aws_eip.existing_eip.public_ip
     }
   }
 }
@@ -94,21 +94,13 @@ resource "aws_instance" "ec2" {
 # --------------------------
 # Elastic IP
 # --------------------------
-resource "aws_eip" "ec2_eip" {
-  instance = aws_instance.ec2.id
-  domain   = "vpc"
-  depends_on = [ aws_instance.ec2 ]
-
-  
-
-  tags = {
-    Name = "${var.project_name}-eip"
-  }
+data "aws_eip" "existing_eip" {
+  public_ip = var.elastic_ip
 }
 # Associate EIP with EC2
 resource "aws_eip_association" "ec2_assoc" {
   instance_id   = aws_instance.ec2.id
-  allocation_id = aws_eip.ec2_eip.id
+  allocation_id = data.aws_eip.existing_eip.id
 }
 # --------------------------
 # Create a Public Hosted Zone for your domain
@@ -127,7 +119,8 @@ resource "aws_route53_record" "frontend" {
   name    = "aiyusdreamapp.name.ng"
   type    = "A"
   ttl     = 300
-  records = [aws_eip.ec2_eip.public_ip]
+ records = [data.aws_eip.existing_eip.public_ip]
+
 }
 
 # (Optional) WWW subdomain → Elastic IP
@@ -136,5 +129,6 @@ resource "aws_route53_record" "frontend_www" {
   name    = "www.aiyusdreamapp.name.ng"
   type    = "A"
   ttl     = 300
-  records = [aws_eip.ec2_eip.public_ip]
+  records = [data.aws_eip.existing_eip.public_ip]
+
 }
