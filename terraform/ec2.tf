@@ -10,7 +10,14 @@ data "aws_ami" "ubuntu" {
     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
 }
-
+data "aws_eip" "existing_eip" {
+  public_ip = var.elastic_ip
+}
+# Associate EIP with EC2
+resource "aws_eip_association" "ec2_assoc" {
+  instance_id   = aws_instance.ec2.id
+  allocation_id = data.aws_eip.existing_eip.id
+}
 # --------------------------
 # EC2 Instance with provisioning
 # --------------------------
@@ -21,7 +28,7 @@ resource "aws_instance" "ec2" {
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = false   # Disable auto public IP
   key_name                    = "terraform-deploy"
-  depends_on                  = [aws_internet_gateway.main]
+  depends_on                  = [aws_internet_gateway.main, aws_eip_association.ec2_assoc]
 
   tags = {
     Name = "${var.project_name}-ec2"
@@ -38,7 +45,7 @@ resource "aws_instance" "ec2" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = var.private_key
-      host = data.aws_eip.existing_eip.public_ip
+      host        = data.aws_eip.existing_eip.public_ip
 
     }
   }
@@ -87,7 +94,7 @@ resource "aws_instance" "ec2" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = var.private_key
-      host = data.aws_eip.existing_eip.public_ip
+      host        = data.aws_eip.existing_eip.public_ip
     }
   }
 }
@@ -95,14 +102,7 @@ resource "aws_instance" "ec2" {
 # --------------------------
 # Elastic IP
 # --------------------------
-data "aws_eip" "existing_eip" {
-  public_ip = var.elastic_ip
-}
-# Associate EIP with EC2
-resource "aws_eip_association" "ec2_assoc" {
-  instance_id   = aws_instance.ec2.id
-  allocation_id = data.aws_eip.existing_eip.id
-}
+
 # --------------------------
 # Create a Public Hosted Zone for your domain
 # --------------------------
