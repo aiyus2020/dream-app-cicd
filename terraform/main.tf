@@ -110,16 +110,4 @@ resource "aws_cloudwatch_metric_alarm" "cpu_alarm" {
     InstanceId = aws_instance.ec2.id
   }
 }
- # Route 53 Hosted Zone
-resource "aws_route53_zone" "main" {
-  name = "aiyusdreamapp.name.ng"
-}
 
-# A Record pointing domain to EC2 public IP
-resource "aws_route53_record" "app_record" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = "aiyusdreamapp.name.ng"
-  type    = "A"
-  ttl     = 300
-  records = [aws_instance.ec2.public_ip]
-}
