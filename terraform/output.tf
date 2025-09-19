@@ -22,3 +22,10 @@ output "ssh_output" {
   value       = "ssh -i ${var.key_name}.pem ubuntu@${aws_instance.ec2.public_ip}"
 }
 
+# --------------------------
+# Output Route 53 Name Servers
+# --------------------------
+output "route53_name_servers" {
+  description = "The name servers for the hosted zone. Copy these to your domain registrar."
+  value       = aws_route53_zone.main.name_servers
+}

@@ -103,46 +103,6 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# --------------------------
-# EC2 Instance with remote-exec
-# --------------------------
-resource "aws_instance" "ec2" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = var.instance_type
-  subnet_id                   = aws_subnet.main.id
-  vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
-  associate_public_ip_address = true
-  key_name                    = "terraform-deploy"
-  depends_on                  = [aws_internet_gateway.main]
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get update -y",
-      "sudo apt-get upgrade -y",
-      "sudo apt install jq -y",
-      "sudo apt-get install -y ca-certificates curl gnupg lsb-release",
-      "sudo mkdir -p /etc/apt/keyrings",
-      "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
-      "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
-      "sudo apt-get update -y",
-      "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin",
-      "sudo systemctl enable docker",
-      "sudo systemctl start docker",
-      "sudo usermod -aG docker ubuntu"
-    ]
-
-    connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = var.private_key
-      host        = self.public_ip
-    }
-  } 
-
-  tags = {
-    Name = "${var.project_name}-ec2"
-  }
-}
 
 # --------------------------
 # CloudWatch CPU Alarm
@@ -161,4 +121,17 @@ resource "aws_cloudwatch_metric_alarm" "cpu_alarm" {
   dimensions = {
     InstanceId = aws_instance.ec2.id
   }
+}
+ # Route 53 Hosted Zone
+resource "aws_route53_zone" "main" {
+  name = "aiyusdreamapp.name.ng"
+}
+
+# A Record pointing domain to EC2 public IP
+resource "aws_route53_record" "app_record" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "aiyusdreamapp.name.ng"
+  type    = "A"
+  ttl     = 300
+  records = [aws_instance.ec2.public_ip]
 }
