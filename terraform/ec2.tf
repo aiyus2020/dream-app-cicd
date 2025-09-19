@@ -18,6 +18,7 @@ resource "aws_eip_association" "ec2_assoc" {
   instance_id   = aws_instance.ec2.id
   allocation_id = data.aws_eip.existing_eip.id
 }
+
 # --------------------------
 # EC2 Instance with provisioning
 # --------------------------
