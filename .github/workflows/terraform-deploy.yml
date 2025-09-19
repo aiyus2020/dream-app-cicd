@@ -1,4 +1,5 @@
 name: Deploy Dream Vacation App
+
 on:
   workflow_dispatch:
   push:
@@ -32,15 +33,13 @@ jobs:
 
       - name: Terraform Apply
         env:
-          TF_VAR_private_key: ${{ secrets.EC2_SSH_KEY }}
           TF_VAR_elastic_ip: ${{ secrets.EC2_ELASTIC_IP }}
         run: terraform apply -auto-approve
 
       - name: Set EC2 Elastic IP
         id: ec2
         run: |
-          EIP="${{ secrets.EC2_ELASTIC_IP }}"
-          echo "ec2_ip=$EIP" >> $GITHUB_OUTPUT
+          echo "ec2_ip=${{ secrets.EC2_ELASTIC_IP }}" >> $GITHUB_OUTPUT
 
     outputs:
       ec2_ip: ${{ steps.ec2.outputs.ec2_ip }}
@@ -79,26 +78,45 @@ jobs:
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Deploy Docker on EC2 with Cleanup
+      - name: Install Docker, Nginx, and Deploy App
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ needs.terraform.outputs.ec2_ip }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # Update system
+            sudo apt-get update -y && sudo apt-get upgrade -y
+
+            # Install dependencies
+            sudo apt install -y jq ca-certificates curl gnupg lsb-release software-properties-common
+
+            # Docker
+            sudo mkdir -p /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+            sudo apt-get update -y
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+            sudo systemctl enable docker && sudo systemctl start docker
+            sudo usermod -aG docker ubuntu
+
+            # Nginx
+            sudo apt-get install -y nginx certbot python3-certbot-nginx
+            sudo systemctl enable nginx && sudo systemctl start nginx
+            sudo ufw allow 'Nginx Full'
+
+            # Navigate to app
             cd /home/ubuntu/dream-vacation
 
-            # Stop and remove old containers
+            # Stop previous containers
             docker compose down || true
-
-            # Remove dangling images
             docker image prune -f || true
 
-            # Get latest Docker tags
+            # Pull latest tags
             FRONTEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-frontend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
             BACKEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-backend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
 
-            # Create/update .env file
+            # Create .env
             cat <<EOF > .env
             FRONTEND_TAG=${FRONTEND_SHA}
             BACKEND_TAG=${BACKEND_SHA}
@@ -108,6 +126,7 @@ jobs:
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
-            # Pull new images and start containers
+            # Start app
             docker compose pull
             docker compose up -d --remove-orphans
+            docker compose ps
