@@ -99,11 +99,17 @@ resource "aws_eip" "ec2_eip" {
   domain   = "vpc"
   depends_on = [ aws_instance.ec2 ]
 
+  
+
   tags = {
     Name = "${var.project_name}-eip"
   }
 }
-
+# Associate EIP with EC2
+resource "aws_eip_association" "ec2_assoc" {
+  instance_id   = aws_instance.ec2.id
+  allocation_id = aws_eip.ec2_eip.id
+}
 # --------------------------
 # Create a Public Hosted Zone for your domain
 # --------------------------
