@@ -30,7 +30,7 @@ jobs:
           TF_VAR_private_key: ${{ secrets.EC2_SSH_KEY }}
         run: |
           terraform destroy -auto-approve
-          terraform apply -auto-approve
+         
 
       - name: Terraform Apply
         env:
