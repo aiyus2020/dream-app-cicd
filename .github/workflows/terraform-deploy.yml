@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - terra-deploy
+
 jobs:
   terraform:
     runs-on: ubuntu-latest
@@ -13,35 +14,39 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_wrapper: false  # Important: disable wrapper for raw output
+          terraform_wrapper: false
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
+
       - name: Terraform Init
         run: terraform init
 
       - name: Terraform Apply
+        env:
+          TF_VAR_private_key: ${{ secrets.EC2_SSH_KEY }}
         run: terraform apply -auto-approve
 
-      - name: Get EC2 Public IP
+      - name: Set EC2 Elastic IP
         id: ec2
         run: |
-          EC2_IP=$(terraform output -raw ec2_public_ip)
-          echo "EC2_IP=$EC2_IP"
-          echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
+          EIP="${{ secrets.EC2_ELASTIC_IP }}"
+          echo "ec2_ip=$EIP" >> $GITHUB_OUTPUT
+
     outputs:
-      ec2_ip: ${{ steps.ec2.outputs.ec2_ip }} 
+      ec2_ip: ${{ steps.ec2.outputs.ec2_ip }}
 
   deploy:
     needs: terraform
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -59,44 +64,49 @@ jobs:
               echo "EC2 is ready"
               break
             fi
+            echo "Waiting 10s for SSH..."
             sleep 10
           done
 
-      - name: Sync files to EC2 with rsync
+      - name: Sync files to EC2
         uses: burnett01/rsync-deployments@5.0
         with:
           switches: -avz --delete
-          path: ./ 
+          path: ./
           remote_path: /home/ubuntu/dream-vacation
           remote_host: ${{ needs.terraform.outputs.ec2_ip }}
           remote_user: ubuntu
           remote_key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Deploy on EC2
+      - name: Deploy Docker on EC2 with Cleanup
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ needs.terraform.outputs.ec2_ip }}  # Use terraform output
+          host: ${{ needs.terraform.outputs.ec2_ip }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-           
-            
-            # Navigate to app directory
-            mkdir -p /home/ubuntu/dream-vacation
             cd /home/ubuntu/dream-vacation
 
+            # Stop and remove old containers
+            docker compose down || true
+
+            # Remove dangling images
+            docker image prune -f || true
+
+            # Get latest Docker tags
             FRONTEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-frontend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
             BACKEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-backend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
 
+            # Create/update .env file
             cat <<EOF > .env
-              FRONTEND_TAG=${FRONTEND_SHA}
-              BACKEND_TAG=${BACKEND_SHA}
-              DB_PORT=${{ secrets.DB_PORT }}
-              POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            FRONTEND_TAG=${FRONTEND_SHA}
+            BACKEND_TAG=${BACKEND_SHA}
+            DB_PORT=${{ secrets.DB_PORT }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
-          
+            # Pull new images and start containers
             docker compose pull
             docker compose up -d --remove-orphans
