@@ -38,7 +38,8 @@ resource "aws_instance" "ec2" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = var.private_key
-      host        = aws_eip.ec2_eip.public_ip
+      host = data.aws_eip.existing_eip.public_ip
+
     }
   }
 
