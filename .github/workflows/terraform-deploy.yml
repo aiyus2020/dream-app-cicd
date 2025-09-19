@@ -25,12 +25,6 @@ jobs:
           aws-region: us-east-1
       - name: Terraform Init
         run: terraform init
-      - name: Recreate EC2 instance
-        env:
-          TF_VAR_private_key: ${{ secrets.EC2_SSH_KEY }}
-        run: |
-          terraform destroy -target=aws_instance.ec2 -auto-approve
-          terraform apply -auto-approve
 
       - name: Terraform Apply
         run: terraform apply -auto-approve

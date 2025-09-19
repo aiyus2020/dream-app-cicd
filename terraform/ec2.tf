@@ -97,6 +97,7 @@ resource "aws_instance" "ec2" {
 resource "aws_eip" "ec2_eip" {
   instance = aws_instance.ec2.id
   domain   = "vpc"
+  depends_on = [ aws_instance.ec2 ]
 
   tags = {
     Name = "${var.project_name}-eip"
