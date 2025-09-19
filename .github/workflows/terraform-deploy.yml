@@ -26,17 +26,10 @@ jobs:
       - name: Terraform Init
         run: terraform init
       - name: Terraform destroy and Apply
-        env:
-          TF_VAR_private_key: ${{ secrets.EC2_SSH_KEY }}
         run: |
           terraform destroy -auto-approve
-         
-
-      - name: Terraform Apply
-        env:
-          TF_VAR_private_key: ${{ secrets.EC2_SSH_KEY }}
-        run: terraform apply -auto-approve
-
+          terraform apply -auto-approve
+          
       - name: Get EC2 Public IP
         id: ec2
         run: |
