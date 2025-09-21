@@ -48,34 +48,38 @@ resource "null_resource" "provisioners" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo apt-get update -y",
-      "sudo apt-get upgrade -y",
+      # Update packages
+      "sudo apt-get update -y && sudo apt-get upgrade -y",
 
-      # Dependencies
+      # Install dependencies
       "sudo apt install -y jq ca-certificates curl gnupg lsb-release software-properties-common",
 
-      # Docker
+      # Install Docker & Compose
       "sudo mkdir -p /etc/apt/keyrings",
       "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
       "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
       "sudo apt-get update -y",
       "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin",
-      "sudo systemctl enable docker",
-      "sudo systemctl start docker",
+      "sudo systemctl enable docker && sudo systemctl start docker",
       "sudo usermod -aG docker ubuntu",
 
-      # Nginx + Certbot
+      # Install Nginx + Certbot
       "sudo apt-get install -y nginx certbot python3-certbot-nginx",
-      "sudo systemctl enable nginx",
-      "sudo systemctl start nginx",
+      "sudo systemctl enable nginx && sudo systemctl start nginx",
       "sudo ufw allow 'Nginx Full'",
+
+      # Replace default nginx config
       "sudo mv /tmp/nginx.conf /etc/nginx/sites-available/default",
       "sudo nginx -t",
 
-      # Issue certificate
-      "sudo certbot --nginx -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng --non-interactive --agree-tos -m admin@aiyusdreamapp.name.ng",
+      # Request Let's Encrypt SSL cert (non-interactive)
+      "sudo certbot --nginx -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng --non-interactive --agree-tos -m aiyusboss@gmail.com",
+
+      # Reload nginx with SSL
       "sudo systemctl reload nginx",
-      "sudo certbot renew --dry-run",
+
+      # Verify certbot auto-renew works
+      "sudo certbot renew --dry-run"
     ]
 
     connection {
@@ -87,6 +91,7 @@ resource "null_resource" "provisioners" {
     }
   }
 }
+
 
 # --------------------------
 # Route 53 Hosted Zone
