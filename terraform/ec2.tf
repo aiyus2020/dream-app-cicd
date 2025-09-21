@@ -10,34 +10,37 @@ data "aws_ami" "ubuntu" {
     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
 }
-data "aws_eip" "existing_eip" {
-  public_ip = var.elastic_ip
-}
-# Associate EIP with EC2
-resource "aws_eip_association" "ec2_assoc" {
-  instance_id   = aws_instance.ec2.id
-  allocation_id = data.aws_eip.existing_eip.id
-}
 
 # --------------------------
-# EC2 Instance with provisioning
+# EC2 Instance (no provisioners here)
 # --------------------------
 resource "aws_instance" "ec2" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
   subnet_id                   = aws_subnet.main.id
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
-  associate_public_ip_address = false   # Disable auto public IP
+  associate_public_ip_address = false   # We’ll attach Elastic IP manually
   key_name                    = "terraform-deploy"
-  depends_on                  = [aws_internet_gateway.main, aws_eip_association.ec2_assoc]
 
   tags = {
     Name = "${var.project_name}-ec2"
   }
+}
 
-  # --------------------------
-  # Provisioners
-  # --------------------------
+# --------------------------
+# Associate existing Elastic IP with EC2
+# --------------------------
+resource "aws_eip_association" "ec2_assoc" {
+  instance_id   = aws_instance.ec2.id
+  allocation_id = data.aws_eip.existing_eip.id
+}
+
+# --------------------------
+# Provisioners (run after EIP association)
+# --------------------------
+resource "null_resource" "provisioners" {
+  depends_on = [aws_eip_association.ec2_assoc]
+
   provisioner "file" {
     source      = "nginx.conf"
     destination = "/tmp/nginx.conf"
@@ -47,7 +50,7 @@ resource "aws_instance" "ec2" {
       user        = "ubuntu"
       private_key = var.private_key
       host        = data.aws_eip.existing_eip.public_ip
-
+      timeout     = "10m"
     }
   }
 
@@ -85,7 +88,7 @@ resource "aws_instance" "ec2" {
       # Install Certbot
       "sudo apt-get install -y certbot python3-certbot-nginx",
 
-      # Issue SSL certificate (replace domain names with your actual ones)
+      # Issue SSL certificate
       "sudo certbot --nginx -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng --non-interactive --agree-tos -m admin@aiyusdreamapp.name.ng",
       "sudo systemctl status certbot.timer",
       "sudo certbot renew --dry-run",
@@ -96,41 +99,34 @@ resource "aws_instance" "ec2" {
       user        = "ubuntu"
       private_key = var.private_key
       host        = data.aws_eip.existing_eip.public_ip
+      timeout     = "10m"
     }
   }
 }
 
 # --------------------------
-# Elastic IP
-# --------------------------
-
-# --------------------------
-# Create a Public Hosted Zone for your domain
+# Route 53 Hosted Zone
 # --------------------------
 data "aws_route53_zone" "main" {
   name         = "aiyusdreamapp.name.ng"
   private_zone = false
 }
 
-
 # --------------------------
-# Route 53 A record (domain → Elastic IP)
+# Route 53 Records
 # --------------------------
 resource "aws_route53_record" "frontend" {
   zone_id = data.aws_route53_zone.main.zone_id
   name    = "aiyusdreamapp.name.ng"
   type    = "A"
   ttl     = 300
- records = [data.aws_eip.existing_eip.public_ip]
-
+  records = [data.aws_eip.existing_eip.public_ip]
 }
 
-# (Optional) WWW subdomain → Elastic IP
 resource "aws_route53_record" "frontend_www" {
   zone_id = data.aws_route53_zone.main.zone_id
   name    = "www.aiyusdreamapp.name.ng"
   type    = "A"
   ttl     = 300
   records = [data.aws_eip.existing_eip.public_ip]
-
 }
