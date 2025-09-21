@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
-  default = "us-east-1"
+  default     = "us-east-1"
 }
 
 variable "vpc_cidr" {
@@ -19,7 +19,7 @@ variable "subnet_cidr" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-    default     = "t3.micro"
+  default     = "t3.micro"
 }
 
 variable "project_name" {
@@ -27,19 +27,15 @@ variable "project_name" {
   type        = string
   default     = "dream"
 }
- 
- variable "key_name" {
-    description = "Name of the existing key pair to use for EC2 instance"
-    type        = string
-    default     = "terraform-deploy" 
- }
 
- variable "private_key" {
-  type      = string
-  sensitive = true
+variable "key_name" {
+  description = "Name of the existing key pair to use for EC2 instance"
+  type        = string
+  default     = "terraform-deploy"
 }
 
-variable "elastic_ip" {
-  description = "Existing Elastic IP to associate with the EC2 instance"
+variable "private_key" {
+  description = "Private key used for provisioners"
   type        = string
+  sensitive   = true
 }
