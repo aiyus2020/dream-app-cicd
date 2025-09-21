@@ -61,54 +61,59 @@ resource "null_resource" "provisioners" {
     }
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      # Update system
-      "sudo apt-get update -y",
-      "sudo apt-get upgrade -y",
+ provisioner "remote-exec" {
+  inline = [
+    # Update system
+    "sudo apt-get update -y",
+    "sudo apt-get upgrade -y",
 
-      # Install dependencies
-      "sudo apt install -y jq ca-certificates curl gnupg lsb-release software-properties-common",
+    # Install dependencies
+    "sudo apt install -y jq ca-certificates curl gnupg lsb-release software-properties-common",
 
-      # Install Docker
-      "sudo mkdir -p /etc/apt/keyrings",
-      "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
-      "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
-      "sudo apt-get update -y",
-      "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin",
-      "sudo systemctl enable docker",
-      "sudo systemctl start docker",
-      "sudo usermod -aG docker ubuntu",
+    # Install Docker
+    "sudo mkdir -p /etc/apt/keyrings",
+    "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
+    "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
+    "sudo apt-get update -y",
+    "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin",
+    "sudo systemctl enable docker",
+    "sudo systemctl start docker",
+    "sudo usermod -aG docker ubuntu",
 
-      # Install Nginx
-      "sudo apt-get install -y nginx",
-      "sudo systemctl enable nginx",
-      "sudo systemctl start nginx",
-      "sudo ufw allow 'Nginx Full'",
-      "sudo ufw delete allow 'Nginx HTTP'",
+    # Install Nginx
+    "sudo apt-get install -y nginx",
+    "sudo systemctl enable nginx",
+    "sudo systemctl start nginx",
+    "sudo ufw allow 'Nginx Full'",
+    "sudo ufw delete allow 'Nginx HTTP'",
 
-      # Replace Nginx config
-      "sudo mv /tmp/nginx.conf /etc/nginx/sites-available/default",
-      "sudo nginx -t",
-      "sudo systemctl reload nginx",
+    # Install Certbot (before we touch configs!)
+    "sudo apt-get install -y certbot python3-certbot-nginx",
 
-      # Install Certbot
-      "sudo apt-get install -y certbot python3-certbot-nginx",
+    # Replace Nginx config
+    "sudo mv /tmp/nginx.conf /etc/nginx/sites-available/default",
+    "sudo nginx -t",
 
-      # Issue SSL certificate
-      "sudo certbot --nginx -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng --non-interactive --agree-tos -m admin@aiyusdreamapp.name.ng",
-      "sudo systemctl status certbot.timer",
-      "sudo certbot renew --dry-run",
-    ]
+    # Run certbot (creates /etc/letsencrypt/options-ssl-nginx.conf)
+    "sudo certbot --nginx -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng --non-interactive --agree-tos -m admin@aiyusdreamapp.name.ng",
 
-    connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = var.private_key
-      host        = data.aws_eip.existing_eip.public_ip
-      timeout     = "10m"
-    }
+    # Reload Nginx AFTER certbot fixed the config
+    "sudo systemctl reload nginx",
+
+    # Check certbot status + test renewal
+    "sudo systemctl status certbot.timer",
+    "sudo certbot renew --dry-run",
+  ]
+
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = var.private_key
+    host        = data.aws_eip.existing_eip.public_ip
+    timeout     = "10m"
   }
+}
+
 }
 
 # --------------------------
