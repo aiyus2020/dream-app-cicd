@@ -84,7 +84,10 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-           
+            # Install jq if missing
+            sudo apt-get update -y
+            sudo apt-get install -y jq curl
+
             
             # Navigate to app directory
             mkdir -p /home/ubuntu/dream-vacation
