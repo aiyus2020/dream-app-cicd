@@ -69,7 +69,7 @@ resource "null_resource" "provisioners" {
       "sudo ufw allow 'Nginx Full'",
 
       # Replace default nginx config
-      "sudo mv /tmp/nginx.conf /etc/nginx/nginx.conf",
+      
       "sudo nginx -t",
 
       # Request Let's Encrypt SSL cert (non-interactive)
