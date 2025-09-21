@@ -69,8 +69,10 @@ resource "null_resource" "provisioners" {
       "sudo ufw allow 'Nginx Full'",
 
       # Replace default nginx config
-      
-      "sudo nginx -t",
+      "sudo cp /tmp/nginx.conf /etc/nginx/sites-available/dreamapp",
+      "sudo ln -s /etc/nginx/sites-available/dreamapp /etc/nginx/sites-enabled/",
+      "sudo rm /etc/nginx/sites-enabled/default",
+      "sudo nginx -t && sudo systemctl reload nginx",
 
       # Request Let's Encrypt SSL cert (non-interactive)
       "sudo certbot --nginx -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng --non-interactive --agree-tos -m aiyusboss@gmail.com",
