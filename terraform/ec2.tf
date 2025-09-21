@@ -12,13 +12,6 @@ data "aws_ami" "ubuntu" {
 }
 
 # --------------------------
-# Existing Elastic IP (lookup)
-# --------------------------
-data "aws_eip" "existing" {
-  public_ip = var.elastic_ip
-}
-
-# --------------------------
 # EC2 Instance (no provisioners here)
 # --------------------------
 resource "aws_instance" "ec2" {
@@ -35,11 +28,18 @@ resource "aws_instance" "ec2" {
 }
 
 # --------------------------
+# Lookup existing Elastic IP (this was missing before 🚀)
+# --------------------------
+data "aws_eip" "existing_eip" {
+  public_ip = var.elastic_ip
+}
+
+# --------------------------
 # Associate existing Elastic IP with EC2
 # --------------------------
 resource "aws_eip_association" "ec2_assoc" {
   instance_id   = aws_instance.ec2.id
-  allocation_id = data.aws_eip.existing.id
+  allocation_id = data.aws_eip.existing_eip.id
 }
 
 # --------------------------
@@ -56,7 +56,7 @@ resource "null_resource" "provisioners" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = var.private_key
-      host        = var.elastic_ip   # ✅ Use var instead of data lookup
+      host        = data.aws_eip.existing_eip.public_ip
       timeout     = "10m"
     }
   }
@@ -105,7 +105,7 @@ resource "null_resource" "provisioners" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = var.private_key
-      host        = var.elastic_ip   # ✅ Use var instead of data lookup
+      host        = data.aws_eip.existing_eip.public_ip
       timeout     = "10m"
     }
   }
@@ -127,7 +127,7 @@ resource "aws_route53_record" "frontend" {
   name    = "aiyusdreamapp.name.ng"
   type    = "A"
   ttl     = 300
-  records = [var.elastic_ip]   # ✅ Simpler
+  records = [data.aws_eip.existing_eip.public_ip]
 }
 
 resource "aws_route53_record" "frontend_www" {
@@ -135,5 +135,5 @@ resource "aws_route53_record" "frontend_www" {
   name    = "www.aiyusdreamapp.name.ng"
   type    = "A"
   ttl     = 300
-  records = [var.elastic_ip]   # ✅ Simpler
+  records = [data.aws_eip.existing_eip.public_ip]
 }
