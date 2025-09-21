@@ -12,6 +12,13 @@ data "aws_ami" "ubuntu" {
 }
 
 # --------------------------
+# Existing Elastic IP (lookup)
+# --------------------------
+data "aws_eip" "existing" {
+  public_ip = var.elastic_ip
+}
+
+# --------------------------
 # EC2 Instance (no provisioners here)
 # --------------------------
 resource "aws_instance" "ec2" {
@@ -32,7 +39,7 @@ resource "aws_instance" "ec2" {
 # --------------------------
 resource "aws_eip_association" "ec2_assoc" {
   instance_id   = aws_instance.ec2.id
-  allocation_id = data.aws_eip.existing_eip.id
+  allocation_id = data.aws_eip.existing.id
 }
 
 # --------------------------
@@ -49,7 +56,7 @@ resource "null_resource" "provisioners" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = var.private_key
-      host        = data.aws_eip.existing_eip.public_ip
+      host        = var.elastic_ip   # ✅ Use var instead of data lookup
       timeout     = "10m"
     }
   }
@@ -98,7 +105,7 @@ resource "null_resource" "provisioners" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = var.private_key
-      host        = data.aws_eip.existing_eip.public_ip
+      host        = var.elastic_ip   # ✅ Use var instead of data lookup
       timeout     = "10m"
     }
   }
@@ -120,7 +127,7 @@ resource "aws_route53_record" "frontend" {
   name    = "aiyusdreamapp.name.ng"
   type    = "A"
   ttl     = 300
-  records = [data.aws_eip.existing_eip.public_ip]
+  records = [var.elastic_ip]   # ✅ Simpler
 }
 
 resource "aws_route53_record" "frontend_www" {
@@ -128,5 +135,5 @@ resource "aws_route53_record" "frontend_www" {
   name    = "www.aiyusdreamapp.name.ng"
   type    = "A"
   ttl     = 300
-  records = [data.aws_eip.existing_eip.public_ip]
+  records = [var.elastic_ip]   # ✅ Simpler
 }
