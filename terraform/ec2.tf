@@ -68,10 +68,7 @@ resource "null_resource" "provisioners" {
       "sudo systemctl enable nginx && sudo systemctl start nginx",
       "sudo ufw allow 'Nginx Full'",
 
-      # Replace default nginx config
-      "sudo cp /tmp/nginx.conf /etc/nginx/sites-available/dreamapp",
-      "sudo ln -s /etc/nginx/sites-available/dreamapp /etc/nginx/sites-enabled/",
-      "sudo rm /etc/nginx/sites-enabled/default",
+    
       "sudo nginx -t && sudo systemctl reload nginx",
 
       # Request Let's Encrypt SSL cert (non-interactive)

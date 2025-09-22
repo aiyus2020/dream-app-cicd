@@ -88,6 +88,15 @@ jobs:
             sudo apt-get update -y
             sudo apt-get install -y jq curl
 
+            sudo apt-get install -y nginx certbot python3-certbot-nginx
+
+            # Copy nginx.conf from repo to EC2
+            sudo cp /home/ubuntu/dream-vacation/nginx.conf /etc/nginx/sites-available/dreamapp
+            sudo ln -sf /etc/nginx/sites-available/dreamapp /etc/nginx/sites-enabled/
+            sudo rm -f /etc/nginx/sites-enabled/default
+            sudo nginx -t
+            sudo systemctl restart nginx
+
             
             # Navigate to app directory
             mkdir -p /home/ubuntu/dream-vacation
