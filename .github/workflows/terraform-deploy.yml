@@ -102,9 +102,10 @@ jobs:
               sudo usermod -aG docker ubuntu
             fi
 
+            # Navigate to app directory
             cd /home/ubuntu/dream-vacation
 
-            # Get latest tags for frontend & backend
+            # Get latest tags for frontend & backend from Docker Hub
             FRONTEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-frontend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
             BACKEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-backend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
 
@@ -120,10 +121,15 @@ jobs:
             EMAIL=aiyusboss@gmail.com
             EOF
 
-            # Start containers (frontend, backend, db, nginx)
+            # Start containers (frontend, backend, nginx, certbot)
             docker compose pull
-            docker compose up -d nginx db backend frontend
+            docker compose up -d --remove-orphans
 
-            # Run certbot once to fetch SSL
-            docker compose run --rm certbot
-            docker compose restart nginx
+            # Request initial certificates (first run only)
+            docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
+              -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng \
+              --email $EMAIL --agree-tos --no-eff-email --non-interactive --staging
+
+            # Reload nginx after certs issued
+            docker compose exec nginx_proxy nginx -s reload
+            # Note: Remove --staging flag above when running for real to avoid rate limits
