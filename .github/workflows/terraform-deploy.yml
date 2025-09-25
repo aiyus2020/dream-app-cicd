@@ -92,6 +92,8 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
+
             # Install jq and Docker if not installed
             sudo apt-get update -y
             sudo apt-get install -y jq curl ca-certificates
@@ -121,15 +123,15 @@ jobs:
             EMAIL=aiyusboss@gmail.com
             EOF
 
-            # Start containers (frontend, backend, nginx, certbot)
+            # Rebuild services
+            docker compose down
             docker compose pull
             docker compose up -d --remove-orphans
 
-            # Request initial certificates (first run only)
+            # Run certbot (staging first, remove flag later for production)
             docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
               -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng \
-              --email $EMAIL --agree-tos --no-eff-email --non-interactive --staging
+              --email $EMAIL --agree-tos --no-eff-email --non-interactive --staging || true
 
-            # Reload nginx after certs issued
-            docker compose exec nginx_proxy nginx -s reload
-            # Note: Remove --staging flag above when running for real to avoid rate limits
+            # Reload nginx
+            docker compose exec nginx_proxy nginx -s reload || true

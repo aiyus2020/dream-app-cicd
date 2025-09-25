@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   frontend:
     image: aiyus/dream-frontend:${FRONTEND_TAG}
@@ -61,7 +63,7 @@ services:
       --webroot-path=/var/www/certbot 
       -d aiyusdreamapp.name.ng 
       -d www.aiyusdreamapp.name.ng 
-      --email aiyusboss@gmail.com --agree-tos --non-interactive || true"
+      --email aiyusboss@gmail.com --agree-tos --non-interactive --staging || true"
 
 volumes:
   pgdata:
