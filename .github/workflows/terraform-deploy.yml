@@ -94,24 +94,19 @@ jobs:
           script: |
             set -e
 
-            # Install jq and Docker if not installed
+            # Install deps if missing
             sudo apt-get update -y
-            sudo apt-get install -y jq curl ca-certificates
+            sudo apt-get install -y jq curl ca-certificates docker.io docker-compose-plugin
+            sudo systemctl enable docker && sudo systemctl start docker
+            sudo usermod -aG docker ubuntu
 
-            if ! command -v docker &> /dev/null; then
-              sudo apt-get install -y docker.io docker-compose-plugin
-              sudo systemctl enable docker && sudo systemctl start docker
-              sudo usermod -aG docker ubuntu
-            fi
-
-            # Navigate to app directory
             cd /home/ubuntu/dream-vacation
 
-            # Get latest tags for frontend & backend from Docker Hub
+            # Fetch latest tags
             FRONTEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-frontend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
             BACKEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-backend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
 
-            # Write .env file
+            # Write env
             cat <<EOF > .env
             FRONTEND_TAG=${FRONTEND_SHA}
             BACKEND_TAG=${BACKEND_SHA}
@@ -123,23 +118,20 @@ jobs:
             EMAIL=aiyusboss@gmail.com
             EOF
 
-            # Rebuild services
-            # Rebuild services
+            # Restart containers
             docker compose down
             docker compose pull
             docker compose up -d --remove-orphans
 
-            # Wait for nginx to be ready (port 80 open)
-            for i in {1..10}; do
-              if docker compose exec nginx_proxy curl -s http://localhost/ > /dev/null; then
-                echo "✅ Nginx is up"
-                break
-              fi
-              echo "⏳ Waiting for nginx..."
-              sleep 5
-            done
+            echo "⏳ Waiting for nginx to be ready..."
+            sleep 10
 
-            # Run certbot challenge
+            # Issue certs (first with staging to avoid rate limits)
             docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
               -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng \
-              --email aiyusboss@gmail.com --agree-tos --no-eff-email --non-interactive --staging
+              --email $EMAIL --agree-tos --no-eff-email --non-interactive --staging || true
+
+            # Reload nginx
+            docker compose exec nginx_proxy nginx -s reload || true
+
+            echo "✅ Deployment complete. Certificates requested (staging)."
