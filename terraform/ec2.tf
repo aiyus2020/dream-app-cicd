@@ -63,22 +63,7 @@ resource "null_resource" "provisioners" {
       "sudo systemctl enable docker && sudo systemctl start docker",
       "sudo usermod -aG docker ubuntu",
 
-      # Install Nginx + Certbot
-      "sudo apt-get install -y nginx certbot python3-certbot-nginx",
-      "sudo systemctl enable nginx && sudo systemctl start nginx",
-      "sudo ufw allow 'Nginx Full'",
-
-    
-      "sudo nginx -t && sudo systemctl reload nginx",
-
-      # Request Let's Encrypt SSL cert (non-interactive)
-      "sudo certbot --nginx -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng --non-interactive --agree-tos -m aiyusboss@gmail.com",
-
-      # Reload nginx with SSL
-      "sudo systemctl reload nginx",
-
-      # Verify certbot auto-renew works
-      "sudo certbot renew --dry-run"
+      
     ]
 
     connection {

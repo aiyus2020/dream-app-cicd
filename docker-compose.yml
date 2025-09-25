@@ -1,9 +1,10 @@
+version: "3.8"
 
 services:
   frontend:
     image: aiyus/dream-frontend:${FRONTEND_TAG}
-    ports:
-      - "8080:80"
+    expose:
+      - "80"
     depends_on:
       - backend
     networks:
@@ -11,8 +12,8 @@ services:
 
   backend:
     image: aiyus/dream-backend:${BACKEND_TAG}
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     env_file: .env
     environment:
       DB_HOST: db
@@ -34,8 +35,38 @@ services:
     networks:
       - vacation-net
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - letsencrypt:/etc/letsencrypt
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - vacation-net
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    entrypoint: >
+      sh -c "certbot certonly --webroot 
+      --webroot-path=/var/www/html 
+      -d aiyusdreamapp.name.ng 
+      -d www.aiyusdreamapp.name.ng 
+      --email aiyusboss@gmail.com --agree-tos --non-interactive || true"
+
 volumes:
   pgdata:
+  letsencrypt:
 
 networks:
   vacation-net:

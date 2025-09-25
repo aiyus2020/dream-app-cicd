@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - terra-deploy
+
 jobs:
   terraform:
     runs-on: ubuntu-latest
@@ -13,24 +14,29 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_wrapper: false  # Important: disable wrapper for raw output
+          terraform_wrapper: false
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
+
       - name: Terraform Init
         run: terraform init
+
       - name: Recreate EC2 instance
         env:
           TF_VAR_private_key: ${{ secrets.EC2_SSH_KEY }}
         run: |
           terraform destroy -target=aws_instance.ec2 -auto-approve
           terraform apply -auto-approve
+
       - name: Terraform Apply
         env:
           TF_VAR_private_key: ${{ secrets.EC2_SSH_KEY }}
@@ -43,7 +49,7 @@ jobs:
           echo "EC2_IP=$EC2_IP"
           echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
     outputs:
-      ec2_ip: ${{ steps.ec2.outputs.ec2_ip }} 
+      ec2_ip: ${{ steps.ec2.outputs.ec2_ip }}
 
   deploy:
     needs: terraform
@@ -58,6 +64,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/terraform-deploy
           chmod 600 ~/.ssh/terraform-deploy
+
       - name: Wait for EC2 SSH
         run: |
           for i in {1..30}; do
@@ -67,6 +74,7 @@ jobs:
             fi
             sleep 10
           done
+
       - name: Sync files to EC2 with rsync
         uses: burnett01/rsync-deployments@5.0
         with:
@@ -80,37 +88,42 @@ jobs:
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ needs.terraform.outputs.ec2_ip }}  # Use terraform output
+          host: ${{ needs.terraform.outputs.ec2_ip }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Install jq if missing
+            # Install jq and Docker if not installed
             sudo apt-get update -y
-            sudo apt-get install -y jq curl
+            sudo apt-get install -y jq curl ca-certificates
 
-            sudo apt-get install -y nginx certbot python3-certbot-nginx
+            if ! command -v docker &> /dev/null; then
+              sudo apt-get install -y docker.io docker-compose-plugin
+              sudo systemctl enable docker && sudo systemctl start docker
+              sudo usermod -aG docker ubuntu
+            fi
 
-            # Copy nginx.conf from repo to EC2
-            sudo cp /home/ubuntu/dream-vacation/nginx.conf /etc/nginx/sites-available/dreamapp
-            sudo ln -sf /etc/nginx/sites-available/dreamapp /etc/nginx/sites-enabled/
-            sudo rm -f /etc/nginx/sites-enabled/default
-            sudo nginx -t
-            sudo systemctl restart nginx
-
-            
-            # Navigate to app directory
-            mkdir -p /home/ubuntu/dream-vacation
             cd /home/ubuntu/dream-vacation
+
+            # Get latest tags for frontend & backend
             FRONTEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-frontend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
             BACKEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-backend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
+
+            # Write .env file
             cat <<EOF > .env
-              FRONTEND_TAG=${FRONTEND_SHA}
-              BACKEND_TAG=${BACKEND_SHA}
-              DB_PORT=${{ secrets.DB_PORT }}
-              POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            FRONTEND_TAG=${FRONTEND_SHA}
+            BACKEND_TAG=${BACKEND_SHA}
+            DB_PORT=${{ secrets.DB_PORT }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            DOMAIN=aiyusdreamapp.name.ng
+            EMAIL=aiyusboss@gmail.com
             EOF
-          
+
+            # Start containers (frontend, backend, db, nginx)
             docker compose pull
-            docker compose up -d --remove-orphans
+            docker compose up -d nginx db backend frontend
+
+            # Run certbot once to fetch SSL
+            docker compose run --rm certbot
+            docker compose restart nginx
