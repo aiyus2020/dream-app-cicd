@@ -97,9 +97,7 @@ jobs:
             # Install deps if missing
             sudo apt-get update -y
             sudo apt-get install -y jq curl ca-certificates docker.io docker-compose-plugin
-            sudo systemctl enable docker && sudo systemctl start docker
-            sudo usermod -aG docker ubuntu
-
+            
             cd /home/ubuntu/dream-vacation
 
             # Fetch latest tags
