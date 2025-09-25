@@ -33,18 +33,7 @@ resource "aws_instance" "ec2" {
 resource "null_resource" "provisioners" {
   depends_on = [aws_instance.ec2]
 
-  provisioner "file" {
-    source      = "nginx.conf"
-    destination = "/tmp/nginx.conf"
 
-    connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = var.private_key
-      host        = aws_instance.ec2.public_ip
-      timeout     = "10m"
-    }
-  }
 
   provisioner "remote-exec" {
     inline = [
