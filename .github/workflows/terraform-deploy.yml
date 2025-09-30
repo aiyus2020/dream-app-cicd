@@ -139,5 +139,4 @@ jobs:
                     # Issue certs (staging first to avoid rate limits)
                     docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
                       -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng \
-                      --email $EMAIL --agree-tos --no-eff-email --non-interactive --staging || true
- 
+                      --email aiyusboss@gmail.com --agree-tos --no-eff-email --non-interactive
