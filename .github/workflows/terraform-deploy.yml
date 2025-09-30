@@ -140,8 +140,4 @@ jobs:
                     docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
                       -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng \
                       --email $EMAIL --agree-tos --no-eff-email --non-interactive --staging || true
-
-                    # Reload nginx
-                    docker compose exec nginx_proxy nginx -s reload || true
-
-                    echo "✅ Deployment complete. Certificates requested (staging)."
+ 

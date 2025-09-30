@@ -23,7 +23,7 @@ services:
     networks:
       - vacation-net
 
-  nginx_proxy:
+  nginx:
     image: nginx:alpine
     container_name: nginx_proxy
     restart: always
@@ -31,7 +31,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
     depends_on:
@@ -39,6 +39,7 @@ services:
       - backend
     networks:
       - vacation-net
+
 
   certbot:
     image: certbot/certbot
@@ -51,8 +52,10 @@ services:
       --webroot-path=/var/www/certbot
       -d aiyusdreamapp.name.ng
       -d www.aiyusdreamapp.name.ng
-      --email aiyusboss@gmail.com
-      --agree-tos --non-interactive --staging || true"
+      --email aiyusboss@gmail.com --agree-tos --non-interactive || true"
+    networks:
+      - vacation-net
+
 
 volumes:
   pgdata:
