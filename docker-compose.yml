@@ -43,12 +43,18 @@ services:
 
   certbot:
     image: certbot/certbot
-    container_name: certbot
     volumes:
-      - certbot-certs:/etc/letsencrypt
-      - certbot-www:/var/www/certbot
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
     entrypoint: /bin/sh
-    command: -c "trap exit TERM; while :; do sleep 6h & wait $${!}; certbot renew --webroot -w /var/www/certbot; done"
+    command: -c "trap exit TERM; while :; do
+        sleep 12h & wait $${!};
+        certbot renew --webroot -w /var/www/certbot --quiet;
+        nginx_pid=$(docker inspect --format '{{ .State.Pid }}' nginx_proxy);
+        if [ -n \"$nginx_pid\" ]; then
+          docker exec nginx_proxy nginx -s reload;
+        fi
+      done"
 
 volumes:
   db-data:
