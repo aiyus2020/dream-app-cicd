@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   nginx_proxy:
     image: nginx:alpine
@@ -12,9 +10,6 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - certbot-www:/var/www/certbot
       - certbot-certs:/etc/letsencrypt
-    depends_on:
-      - frontend
-      - backend
 
   frontend:
     image: aiyus/dream-frontend:${FRONTEND_TAG}
@@ -43,17 +38,14 @@ services:
 
   certbot:
     image: certbot/certbot
+    container_name: certbot
     volumes:
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
-    entrypoint: /bin/sh
-    command: -c "trap exit TERM; while :; do
-        sleep 12h & wait $${!};
+      - certbot-www:/var/www/certbot
+      - certbot-certs:/etc/letsencrypt
+    command: >-
+      sh -c "while :; do
         certbot renew --webroot -w /var/www/certbot --quiet;
-        nginx_pid=$(docker inspect --format '{{ .State.Pid }}' nginx_proxy);
-        if [ -n \"$nginx_pid\" ]; then
-          docker exec nginx_proxy nginx -s reload;
-        fi
+        sleep 12h;
       done"
 
 volumes:
