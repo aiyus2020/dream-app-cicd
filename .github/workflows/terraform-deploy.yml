@@ -106,6 +106,7 @@ jobs:
 
             sudo systemctl enable docker
             sudo systemctl start docker
+            sudo usermod -aG docker ubuntu
 
             cd /home/ubuntu/dream-vacation
 
@@ -126,25 +127,25 @@ jobs:
             EOF
 
             echo "🚀 Step 1: Start only nginx..."
-            sudo docker compose up -d nginx_proxy
+            docker compose up -d nginx_proxy
 
             echo "⏳ Waiting for nginx to start..."
             sleep 10
 
             echo "🚀 Step 2: Request SSL certs..."
-            sudo docker compose run --rm certbot certbot certonly --webroot \
+            docker compose run --rm certbot certonly --webroot \
               -w /var/www/certbot \
               -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng \
               -m aiyusboss@gmail.com --agree-tos --no-eff-email
 
             echo "🚀 Step 3: Reload nginx with new certs..."
-            sudo docker compose exec nginx_proxy nginx -s reload
+            docker compose exec nginx_proxy nginx -s reload
 
             echo "✅ Certificates installed!"
 
             echo "🚀 Step 4: Start full stack..."
-            sudo docker compose up -d --remove-orphans
+            docker compose up -d --remove-orphans
 
             echo "🔁 (Optional) Test renew..."
-            sudo docker compose run --rm certbot certbot renew --dry-run
+            docker compose run --rm certbot renew --dry-run
             echo "✅ Deployment complete."
