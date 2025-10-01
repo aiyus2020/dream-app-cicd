@@ -137,7 +137,7 @@ jobs:
                     sleep 10
 
                     # Issue certs (staging first to avoid rate limits)
-                    sudo docker compose run --rm certbot certonly --webroot \
+                    sudo docker compose run --rm --entrypoint certbot certbot certonly --webroot \
                       --webroot-path=/var/www/certbot \
                       -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng \
                       -m aiyusboss@gmail.com --agree-tos --no-eff-email
