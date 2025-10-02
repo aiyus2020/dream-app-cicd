@@ -92,15 +92,14 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            #!/bin/bash
             set -e
+            cd /home/ubuntu/dream-vacation
 
-            # Install deps if missing
+            # Install deps
             sudo apt-get update -y
             sudo apt-get install -y jq curl ca-certificates docker-compose-plugin
 
             if ! command -v docker &> /dev/null; then
-              echo "🚀 Installing Docker..."
               curl -fsSL https://get.docker.com | sh
             fi
 
@@ -108,44 +107,20 @@ jobs:
             sudo systemctl start docker
             sudo usermod -aG docker ubuntu
 
-            cd /home/ubuntu/dream-vacation
-
-            # Fetch latest tags
+            # Write .env file
             FRONTEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-frontend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
             BACKEND_SHA=$(curl -s "https://hub.docker.com/v2/repositories/aiyus/dream-backend/tags?page_size=1&page=1&ordering=last_updated" | jq -r '.results[0].name')
 
-            # Write .env
             cat <<EOF > .env
             FRONTEND_TAG=${FRONTEND_SHA}
             BACKEND_TAG=${BACKEND_SHA}
-            DB_PORT=***
-            POSTGRES_DB=***
-            POSTGRES_USER=***
-            POSTGRES_PASSWORD=***
-            DOMAIN=aiyusdreamapp.name.ng
-            EMAIL=aiyusboss@gmail.com
+            DB_HOST: db
+            DB_PORT: ${DB_PORT}
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
             EOF
 
-            echo "🚀 Step 1: Start only nginx..."
-            docker compose up -d nginx_proxy
-
-            echo "⏳ Waiting for nginx to start..."
-            sleep 10
-
-            echo "🚀 Step 2: Request SSL certs..."
-            docker compose run --rm certbot certonly --webroot \
-              -w /var/www/certbot \
-              -d aiyusdreamapp.name.ng -d www.aiyusdreamapp.name.ng \
-              -m aiyusboss@gmail.com --agree-tos --no-eff-email
-
-            echo "🚀 Step 3: Reload nginx with new certs..."
-            docker compose exec nginx_proxy nginx -s reload
-
-            echo "✅ Certificates installed!"
-
-            echo "🚀 Step 4: Start full stack..."
+            # Start services
+            docker compose down
             docker compose up -d --remove-orphans
-
-            echo "🔁 (Optional) Test renew..."
-            docker compose run --rm certbot renew --dry-run
-            echo "✅ Deployment complete."

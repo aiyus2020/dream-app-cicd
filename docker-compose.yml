@@ -1,31 +1,56 @@
+version: "3.8"
+
 services:
-  nginx_proxy:
-    image: nginx:alpine
-    container_name: nginx_proxy
+  # -----------------------
+  # Traefik Reverse Proxy
+  # -----------------------
+  traefik:
+    image: traefik:v3.1
+    container_name: traefik
     restart: always
+    command:
+      - "--api.dashboard=true"                 # Dashboard (optional)
+      - "--providers.docker=true"              # Watch Docker containers
+      - "--entrypoints.web.address=:80"        # HTTP
+      - "--entrypoints.websecure.address=:443" # HTTPS
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=aiyusboss@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
       - "443:443"
+      - "8080:8080" # Dashboard (http://server-ip:8080) – remove in prod
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - certbot-www:/var/www/certbot
-      - certbot-certs:/etc/letsencrypt
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
 
+  # -----------------------
+  # Frontend App
+  # -----------------------
   frontend:
     image: aiyus/dream-frontend:${FRONTEND_TAG}
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`aiyusdreamapp.name.ng`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
 
+  # -----------------------
+  # Backend App
+  # -----------------------
   backend:
     image: aiyus/dream-backend:${BACKEND_TAG}
     restart: always
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - DB_PORT=${DB_PORT}
-    depends_on:
-      - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`api.aiyusdreamapp.name.ng`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
 
+  # -----------------------
+  # Database
+  # -----------------------
   db:
     image: postgres:14
     restart: always
@@ -34,21 +59,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
-      - db-data:/var/lib/postgresql/data
-
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - certbot-www:/var/www/certbot
-      - certbot-certs:/etc/letsencrypt
-    command: >-
-      sh -c "while :; do
-        certbot renew --webroot -w /var/www/certbot --quiet;
-        sleep 12h;
-      done"
+      - db_data:/var/lib/postgresql/data
 
 volumes:
-  db-data:
-  certbot-www:
-  certbot-certs:
+  db_data:
