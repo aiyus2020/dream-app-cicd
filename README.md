@@ -57,7 +57,7 @@ cd terraform
 terraform init
 terraform apply -auto-approve
 2. DNS Setup
-Point your domain (your-domain) → EC2 public IP (Terraform output).
+Points your domain (your-domain) → EC2 public IP (Terraform output).
 
 3. CI/CD Trigger
 Push to terra-deploy branch or trigger workflow manually:
