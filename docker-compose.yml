@@ -1,7 +1,7 @@
 
 services:
   frontend:
-    image: aiyus/dream-vacation-frontend
+    build: ./frontend
     ports:
       - "3000:80"
     depends_on:
@@ -10,7 +10,7 @@ services:
       - vacation-net
 
   backend:
-    image: aiyus/dream-vacation-backend
+    build: ./backend
     ports:
       - "5000:5000"
     env_file: .env

@@ -14,6 +14,27 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+const initDB = async () =>{
+  try{
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS destinations(
+        id SERIAL PRIMARY KEY,
+        country VARCHAR(255) NOT NULL,
+        capital VARCHAR(255),
+        population INTEGER,
+        region VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+      `);
+      console.log('Database table ready')
+  }catch(e){
+    console.log('Database init error:', e)
+  }
+}
+
+initDB();
+
+
 const COUNTRIES_API_BASE_URL = process.env.COUNTRIES_API_BASE_URL || 'https://restcountries.com/v3.1';
 
 app.get('/api/destinations', async (req, res) => {
@@ -22,7 +43,7 @@ app.get('/api/destinations', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Interna server error' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -31,18 +52,17 @@ app.post('/api/destinations', async (req, res) => {
   try {
     const response = await axios.get(`${COUNTRIES_API_BASE_URL}/name/${country}`);
     const countryInfo = response.data[0];
-
+    
     const result = await pool.query(
       'INSERT INTO destinations (country, capital, population, region) VALUES ($1, $2, $3, $4) RETURNING *',
       [country, countryInfo.capital[0], countryInfo.population, countryInfo.region]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Error details:', err.message || err);
+    console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 
 app.delete('/api/destinations/:id', async (req, res) => {
   const { id } = req.params;
